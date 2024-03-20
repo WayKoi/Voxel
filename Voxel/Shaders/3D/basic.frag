@@ -24,6 +24,7 @@ in vec4 Colour;
 in vec3 Normal;
 
 uniform Globallight global;
+uniform 
 uniform vec3 viewPos;
 
 void main()
