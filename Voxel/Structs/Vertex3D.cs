@@ -114,5 +114,23 @@ namespace Voxel.Structs {
 
 			return VAO;
 		}
+
+		public static Vector3 Normalize(Vector3 input) {
+			float size = input.Length;
+
+			return input / size;
+		}
+
+		public static Vector3 Cross(Vector3 a, Vector3 b) {
+			return new Vector3(
+				a.Y * b.Z - a.Z * b.Y,
+				a.Z * b.X - a.X * b.Z,
+				a.X * b.Y - a.Y * b.X
+			);
+		}
+
+		public static float Dot(Vector3 a, Vector3 b) {
+			return a.X * b.X + a.Y * b.Y + a.Z * b.Z;
+		}
 	}
 }

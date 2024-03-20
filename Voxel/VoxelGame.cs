@@ -17,8 +17,12 @@ using static OpenTK.Graphics.OpenGL.GL;
 namespace Voxel {
 	internal class VoxelGame : GameWindow {
 		private List<Cube> cube = new List<Cube>();
-		private List<int> VAOs = new List<int>(), VBOs = new List<int>();
+		private int VAO, VBO;
+		private Cube single;
+
 		private Camera Cam = new Camera();
+
+		private Chunk chunk = new Chunk(0, 0, 0);
 
 		private Matrix4 Model, View, Projection;
 
@@ -32,6 +36,8 @@ namespace Voxel {
 					Title = title
 				}
 			) {
+
+			UpdateFrequency = 120;
 		}
 
 		protected override void OnRenderFrame(FrameEventArgs args) {
@@ -45,13 +51,26 @@ namespace Voxel {
 			_shader.SetMatrix4("model", Model);
 			_shader.SetMatrix4("projection", Projection);
 
+			_shader.SetVector3("global.direction", Vertex3D.Normalize(new Vector3(-1, -1, -1)));
+			_shader.SetVector3("global.ambient", new Vector3(0.1f));
+			_shader.SetVector3("global.diffuse", new Vector3(0.3f));
+			_shader.SetVector3("global.specular", new Vector3(0.5f));
+
+			_shader.SetVector3("viewPos", Cam.Position);
+
 			_shader.Use();
 
-			for (int i = 0; i < cube.Count; i++) {
+			GL.BindVertexArray(VAO);
+			GL.DrawArrays(PrimitiveType.Triangles, 0, 6 * 6);
+			GL.BindVertexArray(0);
+
+			chunk.Render();
+
+			/*for (int i = 0; i < cube.Count; i++) {
 				GL.BindVertexArray(VAOs[i]);
 				GL.DrawArrays(PrimitiveType.Triangles, 0, 6 * 6);
 				GL.BindVertexArray(0);
-			}
+			}*/
 
 			SwapBuffers();
 		}
@@ -83,32 +102,57 @@ namespace Voxel {
 			Projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(90.0f), 16f / 9f, 0.1f, 100.0f);
 			View = Cam.LookAt;
 
+			single = new Cube(Vector4.One);
+			VBO = Vertex3D.GenVBO(single.GetVerts(new Vector3(0, 0, 0)));
+			VAO = Vertex3D.GenVAO(VBO);
+
+			chunk.Load();
+
 			Random rand = new Random();
 
-			for (int i = 0; i < 10000; i++) {
+			List<Vector3> Pos = new List<Vector3>();
+
+			for (int i = 0; i < 32; i++) {
+				for (int ii = 0; ii < 32; ii++) {
+					for (int iii = 0; iii < 32; iii++) {
+						cube.Add(
+							new Cube(
+								new Vector4(
+									(float) rand.NextDouble(),
+									(float) rand.NextDouble(),
+									(float) rand.NextDouble(),
+									(float) rand.NextDouble()
+								)
+							)
+						);
+
+						Pos.Add(new Vector3(i, ii, iii));
+					}
+				}
+			}
+
+			/*for (int i = 0; i < 4000; i++) {
 				cube.Add(
 					new Cube(
 						new Vector4(
-							(float) rand.NextDouble(), 
-							(float) rand.NextDouble(), 
-							(float) rand.NextDouble(), 
-							1
-						),
-
-						new Vector3(
-							rand.Next(-40, 40), 
-							rand.Next(-40, 40), 
-							rand.Next(-40, 40)
+							(float) rand.NextDouble(),
+							(float) rand.NextDouble(),
+							(float) rand.NextDouble(),
+							(float) rand.NextDouble()
 						)
 					)
 				);
 
-				Vertex3D[] verts = cube[i].GetVerts();
+				Pos.Add(
+					new Vector3(
+						rand.Next(0, 32),
+						rand.Next(0, 32),
+						rand.Next(0, 32)
+					)
+				);
+			}*/
 
-				VBOs.Add(Vertex3D.GenVBO(verts));
-				Vertex3D.BufferVertices(VBOs[i], verts);
-				VAOs.Add(Vertex3D.GenVAO(VBOs[i]));
-			}
+			chunk.Add(cube.ToArray(), Pos.ToArray());
 
 			_shader.Load();
 		}

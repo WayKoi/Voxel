@@ -1,8 +1,8 @@
-﻿using OpenTK.Graphics.ES11;
+﻿using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using Voxel.Structs;
@@ -11,6 +11,7 @@ namespace Voxel.Components {
 	internal class Chunk {
 		private Vector3 _position;
 
+		private List<Vertex3D> points = new List<Vertex3D>();
 		private Cube?[,,] cubes;
 		private int _chunksize;
 
@@ -24,54 +25,122 @@ namespace Voxel.Components {
 			_chunksize = chunkSize;
 		}
 
-		public void Add (Cube cube) {
-			cubes[(int) cube.Position.X, (int) cube.Position.Y, (int) cube.Position.Z] = cube;
+		public void Load () {
+			VBO = Vertex3D.GenVBO(new Vertex3D[0]);
+			VAO = Vertex3D.GenVAO(VBO);
+		}
+
+		public void Add (Cube cube, Vector3 Position) {
+			cubes[(int) Position.X, (int) Position.Y, (int) Position.Z] = cube;
 
 			Update();
 		}
 
-		public void Add(Cube[] adds) {
-			foreach (Cube cube in adds) {
-				cubes[(int) cube.Position.X, (int) cube.Position.Y, (int) cube.Position.Z] = cube;
+		public void Add(Cube[] adds, Vector3[] Positions) {
+			for (int i = 0; i < adds.Length && i < Positions.Length; i++) {
+				cubes[(int) Positions[i].X, (int) Positions[i].Y, (int) Positions[i].Z] = adds[i];
 			}
 
 			Update();
 		}
 
 		private void Update () {
-			bool[,] plane = new bool[_chunksize, _chunksize];
-			bool[,] obscure = new bool[_chunksize, _chunksize];
+			points.Clear();
 
-			List<Vertex3D> points = new List<Vertex3D>();
+			bool[,,] plane = new bool[_chunksize, _chunksize, 6];
+			bool[,,] obscure = new bool[_chunksize, _chunksize, 6];
 
-			for (int x = 0; x < _chunksize; x++) {
-				for (int y = 0; y < _chunksize; y++) {
-					for (int z = 0; z < _chunksize; z++) {
-						if (cubes[x, y, z] == null) { continue; }
-						Cube cube = (Cube) cubes[x, y, z];
-						
-						plane[y, z] = cubes[x, y, z] != null;
+			for (int a = 0; a < _chunksize; a++) {
+				for (int b = 0; b < _chunksize; b++) {
+					for (int c = 0; c < _chunksize; c++) {
+						if (cubes == null) { continue; }
+						// going through x plane forwards (rep yz-plane) left face
+						Cube? cube = cubes[a, b, c];
+						plane[b, c, 0] = cube != null;
 
-						if (plane[y, z] && !obscure[y, z]) {
+						if (cube != null && !obscure[b, c, 0]) {
 							// add the points for this square
+							Cube point = (Cube) cube;
 							points.AddRange(
-								new Vertex3D[] {
-									new Vertex3D(cube.Position, _position, cube.Colour),
-									new Vertex3D(),
-									new Vertex3D(),
+								Cube.getFace(Face.Left, _position + new Vector3(a, b, c), point.Colour)
+							);
+						}
 
-									new Vertex3D(),
-									new Vertex3D(),
-									new Vertex3D()
-								}
+						// going through x plane backwards (rep yz-plane) right face
+						cube = cubes[_chunksize - 1 - a, b, c];
+						plane[b, c, 1] = cube != null;
+
+						if (cube != null && !obscure[b, c, 1]) {
+							// add the points for this square
+							Cube point = (Cube) cube;
+							points.AddRange(
+								Cube.getFace(Face.Right, _position + new Vector3(_chunksize - 1 - a, b, c), point.Colour)
+							);
+						}
+
+
+						// going through y plane forwards (rep xz-plane) bottom face
+						cube = cubes[b, a, c];
+						plane[b, c, 2] = cube != null;
+
+						if (cube != null && !obscure[b, c, 2]) {
+							// add the points for this square
+							Cube point = (Cube) cube;
+							points.AddRange(
+								Cube.getFace(Face.Bottom, _position + new Vector3(b, a, c), point.Colour)
+							);
+						}
+
+						// going through y plane backwards (rep xz-plane) top face
+						cube = cubes[b, _chunksize - 1 - a, c];
+						plane[b, c, 3] = cube != null;
+
+						if (cube != null && !obscure[b, c, 3]) {
+							// add the points for this square
+							Cube point = (Cube) cube;
+							points.AddRange(
+								Cube.getFace(Face.Top, _position + new Vector3(b, _chunksize - 1 - a, c), point.Colour)
+							);
+						}
+
+
+						// going through z plane forwards (rep xy-plane) back face
+						cube = cubes[b, c, a];
+						plane[b, c, 4] = cube != null;
+
+						if (cube != null && !obscure[b, c, 4]) {
+							// add the points for this square
+							Cube point = (Cube) cube;
+							points.AddRange(
+								Cube.getFace(Face.Back, _position + new Vector3(b, c, a), point.Colour)
+							);
+						}
+
+						// going through z plane backwards (rep xy-plane) front face
+						cube = cubes[b, c, _chunksize - 1 - a];
+						plane[b, c, 5] = cube != null;
+
+						if (cube != null && !obscure[b, c, 5]) {
+							// add the points for this square
+							Cube point = (Cube) cube;
+							points.AddRange(
+								Cube.getFace(Face.Front, _position + new Vector3(b, c, _chunksize - 1 - a), point.Colour)
 							);
 						}
 					}
 				}
 
 				obscure = plane;
-				plane = new bool[_chunksize, _chunksize];
+				plane = new bool[_chunksize, _chunksize, 6];
 			}
+
+			Vertex3D.BufferVertices(VBO, points.ToArray(), BufferUsageHint.StaticDraw);
+		}
+
+		public void Render () {
+			GL.BindVertexArray(VAO);
+			GL.DrawArrays(PrimitiveType.Triangles, 0, points.Count);
+			GL.BindVertexArray(0);
 		}
 
 	}
