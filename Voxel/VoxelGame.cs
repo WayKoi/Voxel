@@ -12,13 +12,11 @@ using System.Threading.Tasks;
 using Voxel.Components;
 using Voxel.Shaders;
 using Voxel.Structs;
-using static OpenTK.Graphics.OpenGL.GL;
 
 namespace Voxel {
 	internal class VoxelGame : GameWindow {
 		private List<Cube> cube = new List<Cube>();
-		private int VAO, VBO;
-		private Cube single;
+		private List<PointLight> lights = new List<PointLight>();
 
 		private Camera Cam = new Camera();
 
@@ -27,6 +25,7 @@ namespace Voxel {
 		private Matrix4 Model, View, Projection;
 
 		private Shader _shader = new Shader("./Shaders/3D/basic.vert", "./Shaders/3D/basic.frag");
+		private Shader _lightShader = new Shader("./Shaders/3D/basic.vert", "./Shaders/3D/light.frag");
 
 		public VoxelGame(int width, int height, string title) : 
 			base(
@@ -51,21 +50,35 @@ namespace Voxel {
 			_shader.SetMatrix4("model", Model);
 			_shader.SetMatrix4("projection", Projection);
 
+			_shader.SetVector3("viewPos", Cam.Position);
+
+			_lightShader.SetMatrix4("view", View);
+			_lightShader.SetMatrix4("model", Model);
+			_lightShader.SetMatrix4("projection", Projection);
+
 			_shader.SetVector3("global.direction", Vertex3D.Normalize(new Vector3(-1, -1, -1)));
 			_shader.SetVector3("global.ambient", new Vector3(0.1f));
-			_shader.SetVector3("global.diffuse", new Vector3(0.3f));
-			_shader.SetVector3("global.specular", new Vector3(0.5f));
+			_shader.SetVector3("global.diffuse", new Vector3(0.0f));
+			_shader.SetVector3("global.specular", new Vector3(0.0f));
 
-			_shader.SetVector3("viewPos", Cam.Position);
+			
+			for (int i = 0; i < lights.Count; i++) {
+				lights[i].AddToShader(i, _shader);
+			}
+
+			_shader.SetInt("lightCount", lights.Count);
 
 			_shader.Use();
 
-			GL.BindVertexArray(VAO);
-			GL.DrawArrays(PrimitiveType.Triangles, 0, 6 * 6);
-			GL.BindVertexArray(0);
-
 			chunk.Render();
 
+			_lightShader.Use();
+
+			for (int i = 0; i < lights.Count; i++) {
+				lights[i].Render(_lightShader);
+			}
+
+			
 			/*for (int i = 0; i < cube.Count; i++) {
 				GL.BindVertexArray(VAOs[i]);
 				GL.DrawArrays(PrimitiveType.Triangles, 0, 6 * 6);
@@ -102,10 +115,6 @@ namespace Voxel {
 			Projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(90.0f), 16f / 9f, 0.1f, 100.0f);
 			View = Cam.LookAt;
 
-			single = new Cube(Vector4.One);
-			VBO = Vertex3D.GenVBO(single.GetVerts(new Vector3(0, 0, 0)));
-			VAO = Vertex3D.GenVAO(VBO);
-
 			chunk.Load();
 
 			Random rand = new Random();
@@ -117,11 +126,11 @@ namespace Voxel {
 					for (int iii = 0; iii < 32; iii++) {
 						cube.Add(
 							new Cube(
-								new Vector4(
+								new Vector4(1
+									/*(float) rand.NextDouble(),
 									(float) rand.NextDouble(),
 									(float) rand.NextDouble(),
-									(float) rand.NextDouble(),
-									(float) rand.NextDouble()
+									(float) rand.NextDouble()*/
 								)
 							)
 						);
@@ -131,14 +140,14 @@ namespace Voxel {
 				}
 			}
 
-			/*for (int i = 0; i < 4000; i++) {
+			/*for (int i = 0; i < 500; i++) {
 				cube.Add(
 					new Cube(
-						new Vector4(
+						new Vector4(1
+							*//*(float) rand.NextDouble(),
 							(float) rand.NextDouble(),
 							(float) rand.NextDouble(),
-							(float) rand.NextDouble(),
-							(float) rand.NextDouble()
+							(float) rand.NextDouble()*//*
 						)
 					)
 				);
@@ -154,8 +163,75 @@ namespace Voxel {
 
 			chunk.Add(cube.ToArray(), Pos.ToArray());
 
+			for (int i = 0; i < 100; i++) {	
+				lights.Add(
+					new PointLight(
+						new Vector3(
+							(float) rand.NextDouble(),
+							(float) rand.NextDouble(),
+							(float) rand.NextDouble()
+						),
+						lightPos()
+						/*new Vector3(
+							rand.Next(-4, 37),
+							rand.Next(-4, 37),
+							rand.Next(-4, 37)
+						)*/,
+						rand.Next(10, 20)
+					)
+				);
+
+				lights[i].Load();
+			}
+
 			_shader.Load();
+			_lightShader.Load();
 		}
+
+
+		private Vector3 lightPos () {
+			Random rand = new Random();
+
+			float x = 0, y = 0, z = 0;
+
+			int special = rand.Next(0, 4);
+
+			if (special == 0) {
+				// x point
+				if (rand.Next(0, 2) == 0) {
+					x = rand.Next(-10, -1);
+				} else {
+					x = rand.Next(33, 43);
+				}
+			} else {
+				x = rand.Next(-10, 43);
+			}
+
+			if (special == 1) {
+				// y point
+				if (rand.Next(0, 2) == 0) {
+					y = rand.Next(-10, -1);
+				} else {
+					y = rand.Next(33, 43);
+				}
+			} else {
+				y = rand.Next(-10, 43);
+			}
+
+			if (special == 2) {
+				// z point
+				if (rand.Next(0, 2) == 0) {
+					z = rand.Next(-10, -1);
+				} else {
+					z = rand.Next(33, 43);
+				}
+			} else {
+				z = rand.Next(-10, 43);
+			}
+
+			return new Vector3(x, y, z);
+		}
+
 
 		protected override void OnResize(ResizeEventArgs e) {
 			base.OnResize(e);

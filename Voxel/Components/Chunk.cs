@@ -14,6 +14,7 @@ namespace Voxel.Components {
 		private List<Vertex3D> points = new List<Vertex3D>();
 		private Cube?[,,] cubes;
 		private int _chunksize;
+		private float _chunkScale = 1f;
 
 		private int VAO, VBO;
 
@@ -58,11 +59,15 @@ namespace Voxel.Components {
 						Cube? cube = cubes[a, b, c];
 						plane[b, c, 0] = cube != null;
 
+						float sa = a * _chunkScale, sb = b * _chunkScale, sc = c * _chunkScale;
+						float chunkMax = (_chunksize - 1) * _chunkScale;
+						Vector3 scalar = new Vector3(_chunkScale);
+
 						if (cube != null && !obscure[b, c, 0]) {
 							// add the points for this square
 							Cube point = (Cube) cube;
 							points.AddRange(
-								Cube.getFace(Face.Left, _position + new Vector3(a, b, c), point.Colour)
+								Cube.getFace(Face.Left, _position + new Vector3(sa, sb, sc), point.Colour, scalar)
 							);
 						}
 
@@ -74,7 +79,7 @@ namespace Voxel.Components {
 							// add the points for this square
 							Cube point = (Cube) cube;
 							points.AddRange(
-								Cube.getFace(Face.Right, _position + new Vector3(_chunksize - 1 - a, b, c), point.Colour)
+								Cube.getFace(Face.Right, _position + new Vector3(chunkMax - sa, sb, sc), point.Colour, scalar)
 							);
 						}
 
@@ -87,7 +92,7 @@ namespace Voxel.Components {
 							// add the points for this square
 							Cube point = (Cube) cube;
 							points.AddRange(
-								Cube.getFace(Face.Bottom, _position + new Vector3(b, a, c), point.Colour)
+								Cube.getFace(Face.Bottom, _position + new Vector3(sb, sa, sc), point.Colour, scalar)
 							);
 						}
 
@@ -99,7 +104,7 @@ namespace Voxel.Components {
 							// add the points for this square
 							Cube point = (Cube) cube;
 							points.AddRange(
-								Cube.getFace(Face.Top, _position + new Vector3(b, _chunksize - 1 - a, c), point.Colour)
+								Cube.getFace(Face.Top, _position + new Vector3(sb, chunkMax - sa, sc), point.Colour, scalar)
 							);
 						}
 
@@ -112,7 +117,7 @@ namespace Voxel.Components {
 							// add the points for this square
 							Cube point = (Cube) cube;
 							points.AddRange(
-								Cube.getFace(Face.Back, _position + new Vector3(b, c, a), point.Colour)
+								Cube.getFace(Face.Back, _position + new Vector3(sb, sc, sa), point.Colour, scalar)
 							);
 						}
 
@@ -124,7 +129,7 @@ namespace Voxel.Components {
 							// add the points for this square
 							Cube point = (Cube) cube;
 							points.AddRange(
-								Cube.getFace(Face.Front, _position + new Vector3(b, c, _chunksize - 1 - a), point.Colour)
+								Cube.getFace(Face.Front, _position + new Vector3(sb, sc, chunkMax - sa), point.Colour, scalar)
 							);
 						}
 					}

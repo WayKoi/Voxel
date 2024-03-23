@@ -12,11 +12,10 @@ struct Globallight {
 struct PointLight {
     vec3 position;
 
-    vec3 ambient;
     vec3 diffuse;
     vec3 specular;
 
-    int distance;
+    float distance;
 };
 
 in vec3 FragPos;
@@ -24,11 +23,13 @@ in vec4 Colour;
 in vec3 Normal;
 
 uniform Globallight global;
-uniform 
+uniform PointLight lights[100];
+uniform int lightCount;
 uniform vec3 viewPos;
 
 void main()
 {
+    // global light
     // ambient
     vec3 ambient = global.ambient * vec3(Colour.x, Colour.y, Colour.z);
 
@@ -43,5 +44,25 @@ void main()
     vec3 specular = global.specular * spec * vec3(Colour.x, Colour.y, Colour.z);
 
     vec3 result = ambient + diffuse + specular;
+
+    for (int i = 0; i < lightCount; i++) {
+        float dist = distance(FragPos, lights[i].position);
+
+        if (dist < lights[i].distance) {
+            // diffuse
+            vec3 lightdir = normalize(lights[i].position - FragPos);
+            diff = max(dot(Normal, lightdir), 0.0);
+            diffuse = lights[i].diffuse * diff * vec3(Colour.x, Colour.y, Colour.z);
+
+            // specular
+            reflectDir = reflect(-lightdir, Normal);
+            spec = pow(max(dot(viewDir, reflectDir), 0.0), 16);
+            specular = lights[i].specular * spec * vec3(Colour.x, Colour.y, Colour.z);
+
+            float amount = (lights[i].distance - dist) / lights[i].distance;
+            result = result + (diffuse + specular) * amount;
+        }
+    }
+
     FragColor = vec4(result, 1.0);
 }
