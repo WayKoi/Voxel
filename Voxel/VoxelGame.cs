@@ -69,10 +69,12 @@ namespace Voxel {
 			_shader.SetInt("lightCount", lights.Count);
 
 			_shader.Use();
-
+			
 			chunk.Render();
 
 			_lightShader.Use();
+
+			// _lightShader.SetVector3("lightColour", new Vector3(1));
 
 			for (int i = 0; i < lights.Count; i++) {
 				lights[i].Render(_lightShader);
@@ -108,6 +110,7 @@ namespace Voxel {
 
 			GL.Enable(EnableCap.DepthTest);
 			GL.Enable(EnableCap.CullFace);
+			// GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
 
 			CursorState = CursorState.Grabbed;
 
@@ -121,16 +124,16 @@ namespace Voxel {
 
 			List<Vector3> Pos = new List<Vector3>();
 
-			for (int i = 0; i < 32; i++) {
+			/*for (int i = 0; i < 32; i++) {
 				for (int ii = 0; ii < 32; ii++) {
 					for (int iii = 0; iii < 32; iii++) {
 						cube.Add(
 							new Cube(
-								new Vector4(1
-									/*(float) rand.NextDouble(),
+								new Vector4(1*//*
 									(float) rand.NextDouble(),
 									(float) rand.NextDouble(),
-									(float) rand.NextDouble()*/
+									(float) rand.NextDouble(),
+									(float) rand.NextDouble()*//*
 								)
 							)
 						);
@@ -138,16 +141,16 @@ namespace Voxel {
 						Pos.Add(new Vector3(i, ii, iii));
 					}
 				}
-			}
+			}*/
 
-			/*for (int i = 0; i < 500; i++) {
+			for (int i = 0; i < 2000; i++) {
 				cube.Add(
 					new Cube(
-						new Vector4(1
-							*//*(float) rand.NextDouble(),
+						new Vector4(1/*
 							(float) rand.NextDouble(),
 							(float) rand.NextDouble(),
-							(float) rand.NextDouble()*//*
+							(float) rand.NextDouble(),
+							(float) rand.NextDouble()*/
 						)
 					)
 				);
@@ -159,11 +162,26 @@ namespace Voxel {
 						rand.Next(0, 32)
 					)
 				);
+			}
+
+			/*for (int i = 0; i < 32; i++) {
+				for (int ii = 0; ii < 32; ii++) {
+					int height = Math.Min((i + ii / 2), 31);
+
+					for (int iii = 0; iii < height; iii++) {
+						cube.Add(new Cube(Vector4.One));
+						Pos.Add(new Vector3(i, iii, ii));
+					}	
+				}
 			}*/
 
 			chunk.Add(cube.ToArray(), Pos.ToArray());
 
-			for (int i = 0; i < 100; i++) {	
+
+			lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0.9f), new Vector3(16, 40, 16), 400));
+			lights[0].Load();
+
+			/*for (int i = 0; i < 100; i++) {
 				lights.Add(
 					new PointLight(
 						new Vector3(
@@ -171,18 +189,18 @@ namespace Voxel {
 							(float) rand.NextDouble(),
 							(float) rand.NextDouble()
 						),
-						lightPos()
-						/*new Vector3(
+						lightPos()*//*
+						new Vector3(
 							rand.Next(-4, 37),
 							rand.Next(-4, 37),
 							rand.Next(-4, 37)
-						)*/,
+						)*//*,
 						rand.Next(10, 20)
 					)
 				);
 
 				lights[i].Load();
-			}
+			}*/
 
 			_shader.Load();
 			_lightShader.Load();
