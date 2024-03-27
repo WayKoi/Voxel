@@ -88,6 +88,7 @@ namespace Voxel.Components {
 						}
 					}
 
+
 					if (cull) {
 						block.CullFace(Face.Top);
 					}
