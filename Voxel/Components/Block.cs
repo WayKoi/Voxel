@@ -30,7 +30,7 @@ namespace Voxel.Components {
 
 			for (int i = 0; i < cull.Length; i++) {
 				if (!cull[i]) {
-					points.AddRange(Cube.getFace((Face) i, Position, Vector4.One, Size));
+					points.AddRange(Cube.GetFace((Face) i, Position, Vector4.One, Size));
 				}
 			}
 

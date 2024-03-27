@@ -58,8 +58,8 @@ namespace Voxel {
 
 			_shader.SetVector3("global.direction", Vertex3D.Normalize(new Vector3(-1, -1, -1)));
 			_shader.SetVector3("global.ambient", new Vector3(0.1f));
-			_shader.SetVector3("global.diffuse", new Vector3(0.0f));
-			_shader.SetVector3("global.specular", new Vector3(0.0f));
+			_shader.SetVector3("global.diffuse", new Vector3(0.2f));
+			_shader.SetVector3("global.specular", new Vector3(0.3f));
 
 			
 			for (int i = 0; i < lights.Count; i++) {
@@ -110,7 +110,7 @@ namespace Voxel {
 
 			GL.Enable(EnableCap.DepthTest);
 			GL.Enable(EnableCap.CullFace);
-			// GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
+			//GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
 
 			CursorState = CursorState.Grabbed;
 
@@ -124,16 +124,16 @@ namespace Voxel {
 
 			List<Vector3> Pos = new List<Vector3>();
 
-			/*for (int i = 0; i < 32; i++) {
+			for (int i = 0; i < 32; i++) {
 				for (int ii = 0; ii < 32; ii++) {
 					for (int iii = 0; iii < 32; iii++) {
 						cube.Add(
 							new Cube(
-								new Vector4(1*//*
+								new Vector4(1/*
 									(float) rand.NextDouble(),
 									(float) rand.NextDouble(),
 									(float) rand.NextDouble(),
-									(float) rand.NextDouble()*//*
+									(float) rand.NextDouble()*/
 								)
 							)
 						);
@@ -141,16 +141,16 @@ namespace Voxel {
 						Pos.Add(new Vector3(i, ii, iii));
 					}
 				}
-			}*/
+			}
 
-			for (int i = 0; i < 2000; i++) {
+			/*for (int i = 0; i < 5000; i++) {
 				cube.Add(
 					new Cube(
-						new Vector4(1/*
+						new Vector4(1*//*
 							(float) rand.NextDouble(),
 							(float) rand.NextDouble(),
 							(float) rand.NextDouble(),
-							(float) rand.NextDouble()*/
+							(float) rand.NextDouble()*//*
 						)
 					)
 				);
@@ -162,7 +162,28 @@ namespace Voxel {
 						rand.Next(0, 32)
 					)
 				);
-			}
+			}*/
+
+			/*cube.Add(new Cube(new Vector4(1)));
+			Pos.Add(new Vector3(5));
+
+			cube.Add(new Cube(new Vector4(1)));
+			Pos.Add(new Vector3(5, 5, 6));
+
+			cube.Add(new Cube(new Vector4(1)));
+			Pos.Add(new Vector3(5, 6, 5));
+
+			cube.Add(new Cube(new Vector4(1)));
+			Pos.Add(new Vector3(6, 5, 5));
+
+			cube.Add(new Cube(new Vector4(1)));
+			Pos.Add(new Vector3(6, 6, 5));
+
+			cube.Add(new Cube(new Vector4(1)));
+			Pos.Add(new Vector3(6, 5, 6));
+
+			cube.Add(new Cube(new Vector4(1)));
+			Pos.Add(new Vector3(5, 6, 6));*/
 
 			/*for (int i = 0; i < 32; i++) {
 				for (int ii = 0; ii < 32; ii++) {
@@ -178,8 +199,14 @@ namespace Voxel {
 			chunk.Add(cube.ToArray(), Pos.ToArray());
 
 
-			lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0.9f), new Vector3(16, 40, 16), 400));
+			lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0.9f), new Vector3(16, 35, 16), 20));
 			lights[0].Load();
+
+			lights.Add(new PointLight(new Vector3(0f, 0.9f, 0f), new Vector3(-5, 16, 16), 20));
+			lights[1].Load();
+
+			lights.Add(new PointLight(new Vector3(0.9f, 0f, 0f), new Vector3(16, 16, -5), 20));
+			lights[2].Load();
 
 			/*for (int i = 0; i < 100; i++) {
 				lights.Add(

@@ -52,6 +52,9 @@ namespace Voxel.Components {
 			bool[,,] plane = new bool[_chunksize, _chunksize, 6];
 			bool[,,] obscure = new bool[_chunksize, _chunksize, 6];
 
+			int drawcount = 0;
+			int planecount = 0;
+
 			for (int a = 0; a < _chunksize; a++) {
 				for (int b = 0; b < _chunksize; b++) {
 					for (int c = 0; c < _chunksize; c++) {
@@ -77,9 +80,11 @@ namespace Voxel.Components {
 							int x = sends[i, 0], y = sends[i, 1], z = sends[i, 2];
 
 							plane[b, c, i] = CubeExists(x, y, z);
-							if (!FaceObscured(x, y, z, obscure, i)) {
+							if (plane[b, c, i]) { planecount++; }
+							if (plane[b, c, i] && !FaceObscured(b, c, obscure, i)) {
 								// add to the drawing plane
-								draw[b, c, i] = 1;					
+								draw[b, c, i] = 1;
+								drawcount++;
 							}
 
 						}
@@ -102,32 +107,134 @@ namespace Voxel.Components {
 						
 						for (int i = 0; i < 6; i++) {
 							if (draw[b, c, i] > 0) {
-								
+								Vector2 size = MakeBlock(b, c, draw, i);
+
+								switch (i) {
+									case 0:
+										points.AddRange(
+											Cube.GetFace(
+												(Face) i,
+												_position + new	Vector3(sends[i, 0], sends[i, 1], sends[i, 2]),
+												Vector4.One,
+												new Vector3(size.X, size.Y, 1)
+											)
+										);
+
+										break;
+									case 1:
+										points.AddRange(
+											Cube.GetFace(
+												(Face) i,
+												_position + new Vector3(sends[i, 0], sends[i, 1], sends[i, 2]),
+												Vector4.One,
+												new Vector3(size.X, size.Y, 1)
+											)
+										);
+
+										break;
+									case 2:
+										points.AddRange(
+											Cube.GetFace(
+												(Face) i,
+												_position + new Vector3(sends[i, 0], sends[i, 1], sends[i, 2]),
+												Vector4.One,
+												new Vector3(1, size.X, size.Y)
+											)
+										);
+
+										break;
+									case 3:
+										points.AddRange(
+											Cube.GetFace(
+												(Face) i,
+												_position + new Vector3(sends[i, 0], sends[i, 1], sends[i, 2]),
+												Vector4.One,
+												new Vector3(1, size.X, size.Y)
+											)
+										);
+
+										break;
+									case 4:
+										points.AddRange(
+											Cube.GetFace(
+												(Face) i,
+												_position + new Vector3(sends[i, 0], sends[i, 1], sends[i, 2]),
+												Vector4.One,
+												new Vector3(size.X, 1, size.Y)
+											)
+										);
+
+										break;
+									case 5:
+										points.AddRange(
+											Cube.GetFace(
+												(Face) i,
+												_position + new Vector3(sends[i, 0], sends[i, 1], sends[i, 2]),
+												Vector4.One,
+												new Vector3(size.X, 1, size.Y)
+											)
+										);
+
+										break;
+								}
 							}
 						}
-						
 					}
 				}
 
-				
-
                 obscure = plane;
 				plane = new bool[_chunksize, _chunksize, 6];
+				draw = new int[_chunksize, _chunksize, 6];
 			}
 
 			Vertex3D.BufferVertices(VBO, points.ToArray(), BufferUsageHint.StaticDraw);
 		}
+			
 
 		public Vector2 MakeBlock(int x, int y, int[,,] draw, int index) {
 			int width = 1, height = 1;
 			
+			int type = draw[x, y, index];
 
+			draw[x, y, index] *= -1;
+
+			for (int i = x + 1; i < _chunksize; i++) {
+				if (draw[i, y, index] == type) {
+					draw[i, y, index] *= -1;
+					width++;
+					continue;
+				}
+				
+				break; 
+			}
+
+			for (int i = y + 1; i < _chunksize; i++) {
+				bool full = true;	
+
+				for (int ii = x; ii < x + width; ii++) {
+					if (draw[ii, i, index] != type) {
+						full = false;
+						break;
+					}
+				}
+
+				if (full) {
+					for (int ii = x; ii < x + width; ii++) {
+						draw[ii, i, index] *= -1;
+					}
+
+					height++;
+					continue;
+				}
+
+				break;
+			}
 
 			return new Vector2(width, height);
 		}
 
-		public bool FaceObscured(int x, int y, int z, bool[,,] obscure, int plane) {
-			return cubes[x, y, z] != null && obscure[y, z, plane];      
+		public bool FaceObscured(int b, int c, bool[,,] obscure, int plane) {
+			return obscure[b, c, plane];      
 		}
 
 		public bool CubeExists(int x, int y, int z) {

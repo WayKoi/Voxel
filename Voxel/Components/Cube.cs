@@ -24,7 +24,7 @@ namespace Voxel.Components {
 			new Vertex3D(0f, 0f, 0f)
 		};
 
-		public static Vertex3D[] getFace (Face face, Vector3 Position, Vector4 Colour, Vector3? Scale = null) {
+		public static Vertex3D[] GetFace (Face face, Vector3 Position, Vector4 Colour, Vector3? Scale = null) {
 			Vector3 scalar = new Vector3(1);
 		
 			if (Scale != null) {
