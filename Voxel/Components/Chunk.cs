@@ -31,21 +31,17 @@ namespace Voxel.Components {
 			VAO = Vertex3D.GenVAO(VBO);
 		}
 
-		public void Add (Cube cube, Vector3 Position) {
-			cubes[(int) Position.X, (int) Position.Y, (int) Position.Z] = cube;
-
-			Update();
+		public void Add (Cube cube, Vector3i Position) {
+			cubes[Position.X, Position.Y, Position.Z] = cube;
 		}
 
-		public void Add(Cube[] adds, Vector3[] Positions) {
+		public void Add(Cube[] adds, Vector3i[] Positions) {
 			for (int i = 0; i < adds.Length && i < Positions.Length; i++) {
-				cubes[(int) Positions[i].X, (int) Positions[i].Y, (int) Positions[i].Z] = adds[i];
+				cubes[Positions[i].X, Positions[i].Y, Positions[i].Z] = adds[i];
 			}
-
-			Update();
 		}
 
-		private void Update () {
+		public void Update () {
 			points.Clear();
 
 			int[,,] draw = new int[_chunksize, _chunksize, 6];
@@ -106,16 +102,22 @@ namespace Voxel.Components {
 						};
 						
 						for (int i = 0; i < 6; i++) {
+							int x = sends[i, 0], y = sends[i, 1], z = sends[i, 2];
+
 							if (draw[b, c, i] > 0) {
 								Vector2 size = MakeBlock(b, c, draw, i);
+
+								Cube? temp = cubes[x, y, z];
+								if (temp == null) { continue; }
+								Cube cube = (Cube) temp;
 
 								switch (i) {
 									case 0:
 										points.AddRange(
 											Cube.GetFace(
 												(Face) i,
-												_position + new	Vector3(sends[i, 0], sends[i, 1], sends[i, 2]),
-												Vector4.One,
+												_position + new	Vector3(x, y, z),
+												cube.Colour,
 												new Vector3(size.X, size.Y, 1)
 											)
 										);
@@ -125,8 +127,8 @@ namespace Voxel.Components {
 										points.AddRange(
 											Cube.GetFace(
 												(Face) i,
-												_position + new Vector3(sends[i, 0], sends[i, 1], sends[i, 2]),
-												Vector4.One,
+												_position + new Vector3(x, y, z),
+												cube.Colour,
 												new Vector3(size.X, size.Y, 1)
 											)
 										);
@@ -136,8 +138,8 @@ namespace Voxel.Components {
 										points.AddRange(
 											Cube.GetFace(
 												(Face) i,
-												_position + new Vector3(sends[i, 0], sends[i, 1], sends[i, 2]),
-												Vector4.One,
+												_position + new Vector3(x, y, z),
+												cube.Colour,
 												new Vector3(1, size.X, size.Y)
 											)
 										);
@@ -147,8 +149,8 @@ namespace Voxel.Components {
 										points.AddRange(
 											Cube.GetFace(
 												(Face) i,
-												_position + new Vector3(sends[i, 0], sends[i, 1], sends[i, 2]),
-												Vector4.One,
+												_position + new Vector3(x, y, z),
+												cube.Colour,
 												new Vector3(1, size.X, size.Y)
 											)
 										);
@@ -158,8 +160,8 @@ namespace Voxel.Components {
 										points.AddRange(
 											Cube.GetFace(
 												(Face) i,
-												_position + new Vector3(sends[i, 0], sends[i, 1], sends[i, 2]),
-												Vector4.One,
+												_position + new Vector3(x, y, z),
+												cube.Colour,
 												new Vector3(size.X, 1, size.Y)
 											)
 										);
@@ -169,8 +171,8 @@ namespace Voxel.Components {
 										points.AddRange(
 											Cube.GetFace(
 												(Face) i,
-												_position + new Vector3(sends[i, 0], sends[i, 1], sends[i, 2]),
-												Vector4.One,
+												_position + new Vector3(x, y, z),
+												cube.Colour,
 												new Vector3(size.X, 1, size.Y)
 											)
 										);
@@ -186,6 +188,10 @@ namespace Voxel.Components {
 				plane = new bool[_chunksize, _chunksize, 6];
 				draw = new int[_chunksize, _chunksize, 6];
 			}
+
+			// TODO
+			// sort points relative to the viewpoint
+			// this will allow for transparent cubes to be drawn properly
 
 			Vertex3D.BufferVertices(VBO, points.ToArray(), BufferUsageHint.StaticDraw);
 		}

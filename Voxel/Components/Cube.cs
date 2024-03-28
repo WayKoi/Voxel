@@ -109,7 +109,7 @@ namespace Voxel.Components {
 		}
 
 		public Cube() {
-			Colour = new Vector4(255, 255, 255, 255);
+			Colour = new Vector4(1, 1, 1, 1);
 		}
 
 		public Cube (Vector4 colour) {

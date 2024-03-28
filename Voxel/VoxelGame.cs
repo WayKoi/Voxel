@@ -20,7 +20,7 @@ namespace Voxel {
 
 		private Camera Cam = new Camera();
 
-		private Chunk chunk = new Chunk(0, 0, 0);
+		private World world = new World();
 
 		private Matrix4 Model, View, Projection;
 
@@ -57,9 +57,9 @@ namespace Voxel {
 			_lightShader.SetMatrix4("projection", Projection);
 
 			_shader.SetVector3("global.direction", Vertex3D.Normalize(new Vector3(-1, -1, -1)));
-			_shader.SetVector3("global.ambient", new Vector3(0.1f));
-			_shader.SetVector3("global.diffuse", new Vector3(0.2f));
-			_shader.SetVector3("global.specular", new Vector3(0.3f));
+			_shader.SetVector3("global.ambient", new Vector3(0.5f));
+			_shader.SetVector3("global.diffuse", new Vector3(0.5f));
+			_shader.SetVector3("global.specular", new Vector3(0.0f));
 
 			
 			for (int i = 0; i < lights.Count; i++) {
@@ -69,8 +69,8 @@ namespace Voxel {
 			_shader.SetInt("lightCount", lights.Count);
 
 			_shader.Use();
-			
-			chunk.Render();
+
+			world.Render();
 
 			_lightShader.Use();
 
@@ -110,7 +110,9 @@ namespace Voxel {
 
 			GL.Enable(EnableCap.DepthTest);
 			GL.Enable(EnableCap.CullFace);
-			//GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
+			GL.Enable(EnableCap.Blend);
+			GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+			// GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
 
 			CursorState = CursorState.Grabbed;
 
@@ -118,86 +120,26 @@ namespace Voxel {
 			Projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(90.0f), 16f / 9f, 0.1f, 100.0f);
 			View = Cam.LookAt;
 
-			chunk.Load();
+			// chunk.Load();
+
+			world.Load();
 
 			Random rand = new Random();
 
-			List<Vector3> Pos = new List<Vector3>();
+			List<Vector3i> pos = new List<Vector3i>();
 
-			for (int i = 0; i < 32; i++) {
-				for (int ii = 0; ii < 32; ii++) {
-					for (int iii = 0; iii < 32; iii++) {
-						cube.Add(
-							new Cube(
-								new Vector4(1/*
-									(float) rand.NextDouble(),
-									(float) rand.NextDouble(),
-									(float) rand.NextDouble(),
-									(float) rand.NextDouble()*/
-								)
-							)
-						);
+			for (int x = 0; x < 512; x++) {
+				for (int z = 0; z < 512; z++) {
+					int y = (int) Math.Round(Math.Sin(x / (Math.PI * 2)) + Math.Cos(z / (Math.PI * 2)));
 
-						Pos.Add(new Vector3(i, ii, iii));
+					for (int h = y; h >= -10; h--) {
+						cube.Add(new Cube());
+						pos.Add(new Vector3i(x, h, z));
 					}
 				}
 			}
 
-			/*for (int i = 0; i < 5000; i++) {
-				cube.Add(
-					new Cube(
-						new Vector4(1*//*
-							(float) rand.NextDouble(),
-							(float) rand.NextDouble(),
-							(float) rand.NextDouble(),
-							(float) rand.NextDouble()*//*
-						)
-					)
-				);
-
-				Pos.Add(
-					new Vector3(
-						rand.Next(0, 32),
-						rand.Next(0, 32),
-						rand.Next(0, 32)
-					)
-				);
-			}*/
-
-			/*cube.Add(new Cube(new Vector4(1)));
-			Pos.Add(new Vector3(5));
-
-			cube.Add(new Cube(new Vector4(1)));
-			Pos.Add(new Vector3(5, 5, 6));
-
-			cube.Add(new Cube(new Vector4(1)));
-			Pos.Add(new Vector3(5, 6, 5));
-
-			cube.Add(new Cube(new Vector4(1)));
-			Pos.Add(new Vector3(6, 5, 5));
-
-			cube.Add(new Cube(new Vector4(1)));
-			Pos.Add(new Vector3(6, 6, 5));
-
-			cube.Add(new Cube(new Vector4(1)));
-			Pos.Add(new Vector3(6, 5, 6));
-
-			cube.Add(new Cube(new Vector4(1)));
-			Pos.Add(new Vector3(5, 6, 6));*/
-
-			/*for (int i = 0; i < 32; i++) {
-				for (int ii = 0; ii < 32; ii++) {
-					int height = Math.Min((i + ii / 2), 31);
-
-					for (int iii = 0; iii < height; iii++) {
-						cube.Add(new Cube(Vector4.One));
-						Pos.Add(new Vector3(i, iii, ii));
-					}	
-				}
-			}*/
-
-			chunk.Add(cube.ToArray(), Pos.ToArray());
-
+			world.AddCubes(pos, cube);
 
 			lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0.9f), new Vector3(16, 35, 16), 20));
 			lights[0].Load();
