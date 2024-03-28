@@ -79,7 +79,7 @@ namespace Voxel.Components {
 							if (plane[b, c, i]) { planecount++; }
 							if (plane[b, c, i] && !FaceObscured(b, c, obscure, i)) {
 								// add to the drawing plane
-								draw[b, c, i] = 1;
+								draw[b, c, i] = GetCubeType(x, y, z);
 								drawcount++;
 							}
 
@@ -245,6 +245,13 @@ namespace Voxel.Components {
 
 		public bool CubeExists(int x, int y, int z) {
 			return cubes[x, y, z] != null;
+		}
+
+		public int GetCubeType(int x, int y, int z) {
+			Cube? point = cubes[x, y, z];
+			if (point == null) { return 1; }
+			Cube cube = (Cube) point;
+			return cube.CubeType;
 		}
 
 		public void Render () {

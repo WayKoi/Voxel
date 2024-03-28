@@ -24,14 +24,14 @@ namespace Voxel.Components {
 
 		public void AddCube (int cx, int cy, int cz, int x, int y, int z, Cube cube, bool update = true) {
 			if (!_chunks.ContainsKey((x, y, z))) {
-				Chunk piece = new Chunk(x * 32, y * 32, z * 32);
+				Chunk piece = new Chunk(x * 32 + (x < 0 ? 1 : 0), y * 32 + (y < 0 ? 1 : 0), z * 32 + (z < 0 ? 1 : 0));
 				if (_loaded) { piece.Load(); }
 				_chunks.Add((x, y, z), piece);
 			}
 
-			cx = cx < 0 ? (32 - Math.Abs(cx)) % 32 : cx % 32;
-			cy = cy < 0 ? (32 - Math.Abs(cy)) % 32 : cy % 32;
-			cz = cz < 0 ? (32 - Math.Abs(cz)) % 32 : cz % 32;
+			cx = cx < 0 ? 31 - (Math.Abs(cx) % 32) : cx % 32;
+			cy = cy < 0 ? 31 - (Math.Abs(cy) % 32) : cy % 32;
+			cz = cz < 0 ? 31 - (Math.Abs(cz) % 32) : cz % 32;
 
 			Chunk chunk = _chunks[(x, y, z)];
 			chunk.Add(cube, new Vector3i(cx, cy, cz));

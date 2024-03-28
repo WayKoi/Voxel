@@ -8,7 +8,50 @@ using Voxel.Structs;
 
 namespace Voxel.Components {
 	internal struct Cube {
-		public Vector4 Colour;
+		private int _id = -1;
+
+		public int CubeType {
+			get { return _id; }
+		}
+
+		public Vector4 Colour {
+			get { return LookupColour(_id); }
+			set {
+				_id = LookupColour(value);
+			}
+		}
+
+		public Cube() {
+			Colour = new Vector4(1, 1, 1, 1);
+		}
+
+		public Cube(Vector4 colour) {
+			Colour = colour;
+		}
+
+		// Static Stuff
+
+		private static Dictionary<Vector4, int> _colourLookup = new Dictionary<Vector4, int>();
+		private static List<Vector4> _colours = new List<Vector4>();
+		private static int _types = 1;
+
+		public static int LookupColour(Vector4 colour) {
+			if (!_colourLookup.ContainsKey(colour)) {
+				_colourLookup.Add(colour, _types);
+				_colours.Add(colour);
+				_types++;
+			}
+
+			return _colourLookup[colour];
+		}
+
+		public static Vector4 LookupColour(int id) {
+			if (id > _types || id < 0) {
+				return Vector4.One;
+			}
+
+			return _colours[id - 1];
+		}
 
 		private static Vertex3D[] _vertices = {
 			new Vertex3D(1f, 1f, 1f),
@@ -106,14 +149,6 @@ namespace Voxel.Components {
 			}
 
 			return new Vertex3D[0];
-		}
-
-		public Cube() {
-			Colour = new Vector4(1, 1, 1, 1);
-		}
-
-		public Cube (Vector4 colour) {
-			Colour = colour;
 		}
 
 		public static Vertex3D[] GetVerts (Vector3 Position, Vector4 Colour, Vector3? Scale = null) {

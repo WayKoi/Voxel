@@ -57,10 +57,9 @@ namespace Voxel {
 			_lightShader.SetMatrix4("projection", Projection);
 
 			_shader.SetVector3("global.direction", Vertex3D.Normalize(new Vector3(-1, -1, -1)));
-			_shader.SetVector3("global.ambient", new Vector3(0.5f));
-			_shader.SetVector3("global.diffuse", new Vector3(0.5f));
+			_shader.SetVector3("global.ambient", new Vector3(0.1f));
+			_shader.SetVector3("global.diffuse", new Vector3(0.0f));
 			_shader.SetVector3("global.specular", new Vector3(0.0f));
-
 			
 			for (int i = 0; i < lights.Count; i++) {
 				lights[i].AddToShader(i, _shader);
@@ -128,12 +127,12 @@ namespace Voxel {
 
 			List<Vector3i> pos = new List<Vector3i>();
 
-			for (int x = 0; x < 512; x++) {
-				for (int z = 0; z < 512; z++) {
+			for (int x = -64; x < 64; x++) {
+				for (int z = -64; z < 64; z++) {
 					int y = (int) Math.Round(Math.Sin(x / (Math.PI * 2)) + Math.Cos(z / (Math.PI * 2)));
 
-					for (int h = y; h >= -10; h--) {
-						cube.Add(new Cube());
+					for (int h = y; h >= -35; h--) {
+						cube.Add(new Cube(new Vector4(1, 1, 1, 1)));
 						pos.Add(new Vector3i(x, h, z));
 					}
 				}
@@ -141,14 +140,32 @@ namespace Voxel {
 
 			world.AddCubes(pos, cube);
 
-			lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0.9f), new Vector3(16, 35, 16), 20));
-			lights[0].Load();
+			lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0.9f), new Vector3(16, 35, 16), 100));
+			
+			lights.Add(new PointLight(new Vector3(0f, 0.9f, 0f), new Vector3(-5, 16, 16), 100));
+			
+			lights.Add(new PointLight(new Vector3(0.9f, 0f, 0f), new Vector3(16, 16, -5), 100));
 
-			lights.Add(new PointLight(new Vector3(0f, 0.9f, 0f), new Vector3(-5, 16, 16), 20));
-			lights[1].Load();
-
-			lights.Add(new PointLight(new Vector3(0.9f, 0f, 0f), new Vector3(16, 16, -5), 20));
-			lights[2].Load();
+			/*lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0f), new Vector3(-1, -1, -1), 5));
+			lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0f), new Vector3(-1, -3, -1), 5));
+			lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0f), new Vector3(-1, -5, -1), 5));
+			lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0f), new Vector3(-1, -7, -1), 5));
+			lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0f), new Vector3(-1, -9, -1), 5));
+			lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0f), new Vector3(-1, -11, -1), 5));
+			lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0f), new Vector3(-1, -13, -1), 5));
+			lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0f), new Vector3(-1, -15, -1), 5));
+			lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0f), new Vector3(-1, -17, -1), 5));
+			lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0f), new Vector3(-1, -19, -1), 5));
+			lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0f), new Vector3(-1, -21, -1), 5));
+			lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0f), new Vector3(-1, -23, -1), 5));
+			lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0f), new Vector3(-1, -25, -1), 5));
+			lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0f), new Vector3(-1, -27, -1), 5));
+			lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0f), new Vector3(-1, -29, -1), 5));
+			lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0f), new Vector3(-1, -31, -1), 5));
+*/
+			foreach (PointLight light in lights) {
+				light.Load();
+			}
 
 			/*for (int i = 0; i < 100; i++) {
 				lights.Add(
