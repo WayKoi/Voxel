@@ -140,11 +140,11 @@ namespace Voxel {
 
 			world.AddCubes(pos, cube);
 
-			lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0.9f), new Vector3(16, 35, 16), 100));
+			lights.Add(new PointLight(new Vector3((float) (255 / 255.0), (float) (214 / 255.0), (float) (170 / 255.0)), new Vector3(16, 35, 16), 100)); 
 			
-			lights.Add(new PointLight(new Vector3(0f, 0.9f, 0f), new Vector3(-5, 16, 16), 100));
+			/*lights.Add(new PointLight(new Vector3(0f, 0.9f, 0f), new Vector3(-5, 16, 16), 100));
 			
-			lights.Add(new PointLight(new Vector3(0.9f, 0f, 0f), new Vector3(16, 16, -5), 100));
+			lights.Add(new PointLight(new Vector3(0.9f, 0f, 0f), new Vector3(16, 16, -5), 100));*/
 
 			/*lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0f), new Vector3(-1, -1, -1), 5));
 			lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0f), new Vector3(-1, -3, -1), 5));

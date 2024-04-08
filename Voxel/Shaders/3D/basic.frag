@@ -29,6 +29,8 @@ uniform vec3 viewPos;
 
 void main()
 {
+    float specularShine = 1;
+
     // global light
     // ambient
     vec3 ambient = global.ambient * vec3(Colour.x, Colour.y, Colour.z);
@@ -40,7 +42,7 @@ void main()
     // Specular
     vec3 viewDir = normalize(viewPos - FragPos);
     vec3 reflectDir = reflect(-global.direction, Normal);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 16);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), specularShine);
     vec3 specular = global.specular * spec * vec3(Colour.x, Colour.y, Colour.z);
 
     vec3 result = ambient + diffuse + specular;
@@ -56,7 +58,7 @@ void main()
 
             // specular
             reflectDir = reflect(-lightdir, Normal);
-            spec = pow(max(dot(viewDir, reflectDir), 0.0), 16);
+            spec = pow(max(dot(viewDir, reflectDir), 0.0), specularShine);
             specular = lights[i].specular * spec * vec3(Colour.x, Colour.y, Colour.z);
 
             float amount = (lights[i].distance - dist) / lights[i].distance;

@@ -54,8 +54,10 @@ namespace Voxel.Components {
 				AddCube(positions[i].X, positions[i].Y, positions[i].Z, chunk.x, chunk.y, chunk.z, cubes[i], false);
 			}
 
-			foreach ((int, int, int) chunk in adds) {
-				_chunks[chunk].Update();
+			foreach ((int x, int y, int z) chunk in adds) {
+				bool[,,] obscure = new bool[32, 32, 6];
+
+                _chunks[chunk].Update(obscure);
 			}
 		}
 

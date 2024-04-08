@@ -41,12 +41,16 @@ namespace Voxel.Components {
 			}
 		}
 
-		public void Update () {
+		public void Update (bool[,,]? obscureStart = null) {
 			points.Clear();
 
 			int[,,] draw = new int[_chunksize, _chunksize, 6];
 			bool[,,] plane = new bool[_chunksize, _chunksize, 6];
 			bool[,,] obscure = new bool[_chunksize, _chunksize, 6];
+
+			if (obscureStart != null && obscureStart.GetLength(0) == _chunksize && obscureStart.GetLength(1) == _chunksize && obscureStart.GetLength(2) == 6) {
+				obscure = obscureStart;
+			}
 
 			int drawcount = 0;
 			int planecount = 0;
@@ -249,7 +253,7 @@ namespace Voxel.Components {
 
 		public int GetCubeType(int x, int y, int z) {
 			Cube? point = cubes[x, y, z];
-			if (point == null) { return 1; }
+			if (point == null) { return -1; }
 			Cube cube = (Cube) point;
 			return cube.CubeType;
 		}
