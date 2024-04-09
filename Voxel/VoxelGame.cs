@@ -27,6 +27,8 @@ namespace Voxel {
 		private Shader _shader = new Shader("./Shaders/3D/basic.vert", "./Shaders/3D/basic.frag");
 		private Shader _lightShader = new Shader("./Shaders/3D/basic.vert", "./Shaders/3D/light.frag");
 
+		private float FarPlane = 400.0f;
+
 		public VoxelGame(int width, int height, string title) : 
 			base(
 				GameWindowSettings.Default,
@@ -42,6 +44,7 @@ namespace Voxel {
 		protected override void OnRenderFrame(FrameEventArgs args) {
 			base.OnRenderFrame(args);
 
+			GL.ClearColor(0.8f, 0.8f, 0.9f, 1);
 			GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
 			// render stuff here
@@ -60,7 +63,11 @@ namespace Voxel {
 			_shader.SetVector3("global.ambient", new Vector3(0.1f));
 			_shader.SetVector3("global.diffuse", new Vector3(0.0f));
 			_shader.SetVector3("global.specular", new Vector3(0.0f));
-			
+			_shader.SetFloat("farPlane", FarPlane);
+			_shader.SetFloat("FogDensity", 0.8f);
+			_shader.SetFloat("FogStart", 0.4f);
+			_shader.SetVector3("FogColour", new Vector3(0.8f, 0.8f, 0.9f));
+
 			for (int i = 0; i < lights.Count; i++) {
 				lights[i].AddToShader(i, _shader);
 			}
@@ -116,7 +123,7 @@ namespace Voxel {
 			CursorState = CursorState.Grabbed;
 
 			Model = Matrix4.Identity;
-			Projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(90.0f), 16f / 9f, 0.1f, 100.0f);
+			Projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(90.0f), 16f / 9f, 0.1f, FarPlane);
 			View = Cam.LookAt;
 
 			// chunk.Load();
@@ -127,11 +134,14 @@ namespace Voxel {
 
 			List<Vector3i> pos = new List<Vector3i>();
 
-			for (int x = -64; x < 64; x++) {
-				for (int z = -64; z < 64; z++) {
-					int y = (int) Math.Round(Math.Sin(x / (Math.PI * 2)) + Math.Cos(z / (Math.PI * 2)));
+			int offsetx = rand.Next(0, 30);
+			int offsetz = rand.Next(0, 30);
 
-					for (int h = y; h >= -35; h--) {
+			for (int x = -256; x < 256; x++) {
+				for (int z = -256; z < 256; z++) {
+					int y = (int) Math.Round(8 * Math.Sin((x + offsetx) / (Math.PI * 4)) + 6 * Math.Cos((z + offsetz) / (Math.PI * 4)));
+
+					for (int h = y; h >= -20; h--) {
 						cube.Add(new Cube(new Vector4(1, 1, 1, 1)));
 						pos.Add(new Vector3i(x, h, z));
 					}
@@ -140,8 +150,8 @@ namespace Voxel {
 
 			world.AddCubes(pos, cube);
 
-			lights.Add(new PointLight(new Vector3((float) (255 / 255.0), (float) (214 / 255.0), (float) (170 / 255.0)), new Vector3(16, 35, 16), 100)); 
-			
+			// lights.Add(new PointLight(new Vector3((float) (255 / 255.0), (float) (214 / 255.0), (float) (170 / 255.0)), new Vector3(16, 35, 16), 100));
+
 			/*lights.Add(new PointLight(new Vector3(0f, 0.9f, 0f), new Vector3(-5, 16, 16), 100));
 			
 			lights.Add(new PointLight(new Vector3(0.9f, 0f, 0f), new Vector3(16, 16, -5), 100));*/
@@ -163,11 +173,9 @@ namespace Voxel {
 			lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0f), new Vector3(-1, -29, -1), 5));
 			lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0f), new Vector3(-1, -31, -1), 5));
 */
-			foreach (PointLight light in lights) {
-				light.Load();
-			}
 
-			/*for (int i = 0; i < 100; i++) {
+
+			for (int i = 0; i < 100; i++) {
 				lights.Add(
 					new PointLight(
 						new Vector3(
@@ -175,18 +183,22 @@ namespace Voxel {
 							(float) rand.NextDouble(),
 							(float) rand.NextDouble()
 						),
-						lightPos()*//*
+						/*lightPos()*/
 						new Vector3(
-							rand.Next(-4, 37),
-							rand.Next(-4, 37),
-							rand.Next(-4, 37)
-						)*//*,
-						rand.Next(10, 20)
+							rand.Next(-256, 256),
+							rand.Next(10, 40),
+							rand.Next(-256, 256)
+						),
+						rand.Next(30, 60)
 					)
 				);
 
 				lights[i].Load();
-			}*/
+			}
+
+			foreach (PointLight light in lights) {
+				light.Load();
+			}
 
 			_shader.Load();
 			_lightShader.Load();

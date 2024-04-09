@@ -17,8 +17,8 @@ namespace Voxel.Components {
 		}
 
 		public Vector3 Speed, Acceleration = new Vector3(0, 0, 0);
-		private float MoveSpeed = 5;
-		private float MaxSpeed = 10;
+		private float MoveSpeed = 10;
+		private float MaxSpeed = 20;
 
 		public Vector3 Rotation {
 			get { return _rotation; }
