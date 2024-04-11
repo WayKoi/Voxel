@@ -39,32 +39,106 @@ namespace Voxel.Components {
 			}
 		}
 
-		public void Load () {
+		public int[] GetEdge (Face face) {
+			List<int> lines = new List<int>();
+			
+			switch (face) {
+				case Face.Left:
+					for (int y = 0; y < Size; y++) {
+						int line = 0;
+						
+						for (int z = 0; z < Size; z++) {
+							int spot = GetSpot(_filled[y, z], 0);
+							line += spot << z;
+						}
+
+						lines.Add(line);
+					}
+					break;
+				case Face.Right:
+					for (int y = 0; y < Size; y++) {
+						int line = 0;
+
+						for (int z = 0; z < Size; z++) {
+							int spot = GetSpot(_filled[y, z], 31);
+							int shift = GetSpot((spot >> 31), 0);
+							line += shift << z;
+						}
+
+						lines.Add(line);
+					}
+					break;
+				case Face.Top:
+					for (int z = 0; z < Size; z++) {
+						lines.Add(_filled[31, z]);
+					}
+					break;
+				case Face.Bottom:
+					for (int z = 0; z < Size; z++) {
+						lines.Add(_filled[0, z]);
+					}
+					break;
+			}
+
+			return lines.ToArray();
+		}
+
+		public void Load (int[][]? edges = null) {
 			if (_loaded) { return; }
+
+			int[][] checks = new int[6][];
+
+			if (edges != null) {
+				checks = edges;
+			}
+
+			for (int i = 0; i < 6; i++) {
+				if (checks[i] == null) {
+					checks[i] = new int[Size];
+				}
+			}
 
 			List<Vertex3D> load = new List<Vertex3D>();
 
 			for (int y = 0; y < Size; y++) {
 				for (int z = 0; z < Size; z++) {
 					// cull faces
-					int left = _filled[y, z] ^ (_filled[y, z] << 1);
+					int left = _filled[y, z] << 1;
+
+					// check for left chunk being full
+					if (CheckSpot(checks[(int) Face.Left][y], z)) {
+						left += 1; // this means that the chunk next to this one covers this face
+					}
+
+					left = left ^ (_filled[y, z]);
+
 					int right = _filled[y, z] >> 1;
 
-					if (CheckSpot(right, 31)) { // remove the high bit if it is set
-						right -= (1 << 31);
+					// remove the high bit if it is set only if the chunk next to it is empty
+					bool check = CheckSpot(checks[(int) Face.Right][y], z);
+
+					if (CheckSpot(right, 31)) {
+						if (!check) {
+							right -= (1 << 31);
+						}
+					} else if (check) {
+						right += (1 << 31);
 					}
 
 					right = _filled[y, z] ^ right;
 
-					int top = _filled[y, z];
-					int bottom = _filled[y, z];
+					int top, bottom;
 
 					if (y < Size - 1) {
 						top = _filled[y, z] ^ _filled[y + 1, z];
+					} else {
+						top = _filled[y, z] ^ checks[(int) Face.Top][z];
 					}
 
 					if (y > 0) {
 						bottom = _filled[y, z] ^ _filled[y - 1, z];
+					} else {
+						bottom = _filled[y, z] ^ checks[(int) Face.Bottom][z];
 					}
 
 					int front = _filled[y, z];

@@ -126,6 +126,20 @@ namespace Voxel {
 			Projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(90.0f), 16f / 9f, 0.1f, FarPlane);
 			View = Cam.LookAt;
 
+			for (int i = 0; i < 40; i++) {
+				world.AddCube(0, 0, i, 0);
+			}
+
+			world.AddCube(0, -1, 0, 0);
+			world.AddCube(0, -2, 0, 0);
+			world.AddCube(0, -2, 1, 0);
+			world.AddCube(0, -1, 1, 0);
+
+			world.AddCube(0, -1, 0, 1);
+			world.AddCube(0, -2, 0, 1);
+			world.AddCube(0, -2, 1, 1);
+			world.AddCube(0, -1, 1, 1);
+
 			/*for (int x = 0; x < 32; x++) {
 				for (int z = 0; z < 32; z++) {
 					int y = 16 + (int) Math.Round(8 * Math.Sin((x) / (Math.PI * 4)) + 6 * Math.Cos((z) / (Math.PI * 4)));
@@ -136,15 +150,15 @@ namespace Voxel {
 				}
 			}*/
 
-			for (int x = -256; x < 256; x++) {
+			/*for (int x = -256; x < 256; x++) {
 				for (int z = -256; z < 256; z++) {
 					int y = 16 + (int) Math.Round(8 * Math.Sin(x / (Math.PI * 4)) + 6 * Math.Cos(z / (Math.PI * 4)));
 
-					for (int h = y; h >= -20; h--) {
+					for (int h = y; h >= 0; h--) {
 						world.AddCube(0, x, h, z);
 					}
 				}
-			}
+			}*/
 
 			world.Init();
 
@@ -192,8 +206,11 @@ namespace Voxel {
 			lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0f), new Vector3(-1, -31, -1), 5));
 */
 
+			lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0.9f), new Vector3(-1, -1, -1), 5));
+			lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0f), new Vector3(2, 2, 2), 5));
+			lights.Add(new PointLight(new Vector3(0.9f, 0.9f, 0f), new Vector3(-1, 32, -1), 5));
 
-			for (int i = 0; i < 100; i++) {
+			/*for (int i = 0; i < 100; i++) {
 				lights.Add(
 					new PointLight(
 						new Vector3(
@@ -201,7 +218,7 @@ namespace Voxel {
 							(float) rand.NextDouble(),
 							(float) rand.NextDouble()
 						),
-						/*lightPos()*/
+						*//*lightPos()*//*
 						new Vector3(
 							rand.Next(-256, 256),
 							rand.Next(10, 40),
@@ -212,7 +229,7 @@ namespace Voxel {
 				);
 
 				lights[i].Load();
-			}
+			}*/
 
 			foreach (PointLight light in lights) {
 				light.Load();

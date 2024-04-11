@@ -18,7 +18,30 @@ namespace Voxel.Components {
 			if (_initialized) { return; }
 
 			foreach (KeyValuePair<(int, int, int), Chunk> pair in _chunks) {
-				pair.Value.Load();
+				int[][] edges = new int[6][];
+				(int x, int y, int z) chunkPos = pair.Key;
+
+				// left chunk, right face
+				if (_chunks.ContainsKey((chunkPos.x - 1, chunkPos.y, chunkPos.z))) {
+					edges[(int) Face.Left] = _chunks[(chunkPos.x - 1, chunkPos.y, chunkPos.z)].GetEdge(Face.Right);
+				}
+
+				// right chunk, left face
+				if (_chunks.ContainsKey((chunkPos.x + 1, chunkPos.y, chunkPos.z))) {
+					edges[(int) Face.Right] = _chunks[(chunkPos.x + 1, chunkPos.y, chunkPos.z)].GetEdge(Face.Left);
+				}
+
+				// top chunk, bottom face
+				if (_chunks.ContainsKey((chunkPos.x, chunkPos.y + 1, chunkPos.z))) {
+					edges[(int) Face.Top] = _chunks[(chunkPos.x, chunkPos.y + 1, chunkPos.z)].GetEdge(Face.Bottom);
+				}
+
+				// bottom chunk, top face
+				if (_chunks.ContainsKey((chunkPos.x, chunkPos.y - 1, chunkPos.z))) {
+					edges[(int) Face.Bottom] = _chunks[(chunkPos.x, chunkPos.y - 1, chunkPos.z)].GetEdge(Face.Top);
+				}
+
+				pair.Value.Load(edges);
 			}
 
 			_initialized = true;
@@ -40,17 +63,17 @@ namespace Voxel.Components {
 					(cx, cy, cz), 
 					new Chunk(
 						new Vector3(
-							cx * Chunk.Size + (pos[0] ? 1 : 0), 
-							cy * Chunk.Size + (pos[1] ? 1 : 0), 
-							cz * Chunk.Size + (pos[2] ? 1 : 0)
+							cx * Chunk.Size, 
+							cy * Chunk.Size, 
+							cz * Chunk.Size
 						)
 					)
 				);
 			}
 
-			int px = pos[0] ? (Chunk.Size - 1) - (Math.Abs(x) % Chunk.Size) : x % Chunk.Size;
-			int py = pos[1] ? (Chunk.Size - 1) - (Math.Abs(y) % Chunk.Size) : y % Chunk.Size;
-			int pz = pos[2] ? (Chunk.Size - 1) - (Math.Abs(z) % Chunk.Size) : z % Chunk.Size;
+			int px = pos[0] ? (Chunk.Size - 1) - (Math.Abs(x + 1) % Chunk.Size) : x % Chunk.Size;
+			int py = pos[1] ? (Chunk.Size - 1) - (Math.Abs(y + 1) % Chunk.Size) : y % Chunk.Size;
+			int pz = pos[2] ? (Chunk.Size - 1) - (Math.Abs(z + 1) % Chunk.Size) : z % Chunk.Size;
 
 			_chunks[(cx, cy, cz)].AddCubes(id, px, py, pz);
 		}
