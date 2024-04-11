@@ -1,5 +1,6 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
+using OpenTK.Platform.Windows;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,260 +10,138 @@ using Voxel.Structs;
 
 namespace Voxel.Components {
 	internal class Chunk {
-		private Vector3 _position;
+		public static readonly short Size = 32;
 
-		private List<Vertex3D> points = new List<Vertex3D>();
-		private Cube?[,,] cubes;
-		private int _chunksize;
-		private float _chunkScale = 1f;
+		private Vector3 _position = new Vector3();
 
-		private int VAO, VBO;
+		private int[,,] _cubetypes;
+		private int[,] _filled; // we use this one bitwise
 
-		public Chunk(int x, int y, int z, int chunkSize = 32) {
-			_position = new Vector3(x, y, z);
+		private bool _loaded = false;
 
-			cubes = new Cube?[chunkSize, chunkSize, chunkSize];
+		private int _vao, _vbo, _pointCount = 0;
 
-			_chunksize = chunkSize;
+		public Chunk(Vector3 position) {
+			_position = position;
+
+			_cubetypes = new int[Size, Size, Size];
+			_filled = new int[Size, Size];
+		}
+
+		public void AddCubes (int id, int x, int y, int z) {
+			if (x < 0 || x >= Size) { return; }
+			if (y < 0 || y >= Size) { return; }
+			if (z < 0 || z >= Size) { return; }
+
+			_cubetypes[x, y, z] = id;
+			if (!CheckFilled(x, y, z)) {
+				_filled[y, z] += 1 << x; // add a single bit to the proper position
+			}
 		}
 
 		public void Load () {
-			VBO = Vertex3D.GenVBO(new Vertex3D[0]);
-			VAO = Vertex3D.GenVAO(VBO);
-		}
+			if (_loaded) { return; }
 
-		public void Add (Cube cube, Vector3i Position) {
-			cubes[Position.X, Position.Y, Position.Z] = cube;
-		}
+			List<Vertex3D> load = new List<Vertex3D>();
 
-		public void Add(Cube[] adds, Vector3i[] Positions) {
-			for (int i = 0; i < adds.Length && i < Positions.Length; i++) {
-				cubes[Positions[i].X, Positions[i].Y, Positions[i].Z] = adds[i];
-			}
-		}
+			for (int y = 0; y < Size; y++) {
+				for (int z = 0; z < Size; z++) {
+					// cull faces
+					int left = _filled[y, z] ^ (_filled[y, z] << 1);
+					int right = _filled[y, z] >> 1;
 
-		public void Update (bool[,,]? obscureStart = null) {
-			points.Clear();
+					if (CheckSpot(right, 31)) { // remove the high bit if it is set
+						right -= (1 << 31);
+					}
 
-			int[,,] draw = new int[_chunksize, _chunksize, 6];
-			bool[,,] plane = new bool[_chunksize, _chunksize, 6];
-			bool[,,] obscure = new bool[_chunksize, _chunksize, 6];
+					right = _filled[y, z] ^ right;
 
-			if (obscureStart != null && obscureStart.GetLength(0) == _chunksize && obscureStart.GetLength(1) == _chunksize && obscureStart.GetLength(2) == 6) {
-				obscure = obscureStart;
-			}
+					int top = _filled[y, z];
+					int bottom = _filled[y, z];
 
-			int drawcount = 0;
-			int planecount = 0;
+					if (y < Size - 1) {
+						top = _filled[y, z] ^ _filled[y + 1, z];
+					}
 
-			for (int a = 0; a < _chunksize; a++) {
-				for (int b = 0; b < _chunksize; b++) {
-					for (int c = 0; c < _chunksize; c++) {
-						/*
-							Front = 0,
-							Back = 1,
-							Left = 2,
-							Right = 3,
-							Top = 4,
-							Bottom = 5
-						 */
+					if (y > 0) {
+						bottom = _filled[y, z] ^ _filled[y - 1, z];
+					}
 
-						int[,] sends = {
-							{ b, c, _chunksize - 1 - a },
-							{ b, c, a },
-							{ a, b, c },
-							{ _chunksize - 1 - a, b, c },
-							{ b, _chunksize - 1 - a, c },
-							{ b, a, c }
-						};
+					int front = _filled[y, z];
+					int back = _filled[y, z];
 
-						for (int i = 0; i < 6; i++) {
-							int x = sends[i, 0], y = sends[i, 1], z = sends[i, 2];
+					if (z < Size - 1) {
+						front = _filled[y, z] ^ _filled[y, z + 1];
+					}
 
-							plane[b, c, i] = CubeExists(x, y, z);
-							if (plane[b, c, i]) { planecount++; }
-							if (plane[b, c, i] && !FaceObscured(b, c, obscure, i)) {
-								// add to the drawing plane
-								draw[b, c, i] = GetCubeType(x, y, z);
-								drawcount++;
+					if (z > 0) {
+						back = _filled[y, z] ^ _filled[y, z - 1];
+					}
+
+					float py = _position.Y + y;
+					float pz = _position.Z + z;
+
+					for (int x = 0; x < Size; x++) {
+						float px = _position.X + x;
+
+						if (CheckSpot(_filled[y, z], x)) {
+							Vector4 colour = Cube.GetCubeColour(_cubetypes[x, y, z], px, py, pz);
+
+							if (CheckSpot(left, x)) {
+								load.AddRange(Cube.GetFace(Face.Left, px, py, pz, colour));
 							}
 
-						}
-					}
-				}
+							if (CheckSpot(right, x)) {
+								load.AddRange(Cube.GetFace(Face.Right, px, py, pz, colour));
+							}
 
-				// optimize the drawing plane
-				// add the points to the draw
+							if (CheckSpot(top, x)) {
+								load.AddRange(Cube.GetFace(Face.Top, px, py, pz, colour));
+							}
 
-				for (int b = 0; b < _chunksize; b++) {
-					for (int c = 0; c < _chunksize; c++) {
-						int[,] sends = {
-							{ b, c, _chunksize - 1 - a },
-							{ b, c, a },
-							{ a, b, c },
-							{ _chunksize - 1 - a, b, c },
-							{ b, _chunksize - 1 - a, c },
-							{ b, a, c }
-						};
-						
-						for (int i = 0; i < 6; i++) {
-							int x = sends[i, 0], y = sends[i, 1], z = sends[i, 2];
+							if (CheckSpot(bottom, x)) {
+								load.AddRange(Cube.GetFace(Face.Bottom, px, py, pz, colour));
+							}
 
-							if (draw[b, c, i] > 0) {
-								Vector2 size = MakeBlock(b, c, draw, i);
+							if (CheckSpot(front, x)) {
+								load.AddRange(Cube.GetFace(Face.Front, px, py, pz, colour));
+							}
 
-								Cube? temp = cubes[x, y, z];
-								if (temp == null) { continue; }
-								Cube cube = (Cube) temp;
-
-								switch (i) {
-									case 0:
-										points.AddRange(
-											Cube.GetFace(
-												(Face) i,
-												_position + new	Vector3(x, y, z),
-												cube.Colour,
-												new Vector3(size.X, size.Y, 1)
-											)
-										);
-
-										break;
-									case 1:
-										points.AddRange(
-											Cube.GetFace(
-												(Face) i,
-												_position + new Vector3(x, y, z),
-												cube.Colour,
-												new Vector3(size.X, size.Y, 1)
-											)
-										);
-
-										break;
-									case 2:
-										points.AddRange(
-											Cube.GetFace(
-												(Face) i,
-												_position + new Vector3(x, y, z),
-												cube.Colour,
-												new Vector3(1, size.X, size.Y)
-											)
-										);
-
-										break;
-									case 3:
-										points.AddRange(
-											Cube.GetFace(
-												(Face) i,
-												_position + new Vector3(x, y, z),
-												cube.Colour,
-												new Vector3(1, size.X, size.Y)
-											)
-										);
-
-										break;
-									case 4:
-										points.AddRange(
-											Cube.GetFace(
-												(Face) i,
-												_position + new Vector3(x, y, z),
-												cube.Colour,
-												new Vector3(size.X, 1, size.Y)
-											)
-										);
-
-										break;
-									case 5:
-										points.AddRange(
-											Cube.GetFace(
-												(Face) i,
-												_position + new Vector3(x, y, z),
-												cube.Colour,
-												new Vector3(size.X, 1, size.Y)
-											)
-										);
-
-										break;
-								}
+							if (CheckSpot(back, x)) {
+								load.AddRange(Cube.GetFace(Face.Back, px, py, pz, colour));
 							}
 						}
 					}
 				}
-
-                obscure = plane;
-				plane = new bool[_chunksize, _chunksize, 6];
-				draw = new int[_chunksize, _chunksize, 6];
 			}
 
-			// TODO
-			// sort points relative to the viewpoint
-			// this will allow for transparent cubes to be drawn properly
+			_vbo = Vertex3D.GenVBO(load.ToArray(), BufferUsageHint.StaticDraw);
+			_vao = Vertex3D.GenVAO(_vbo);
+			_pointCount = load.Count;
 
-			Vertex3D.BufferVertices(VBO, points.ToArray(), BufferUsageHint.StaticDraw);
-		}
-			
-
-		public Vector2 MakeBlock(int x, int y, int[,,] draw, int index) {
-			int width = 1, height = 1;
-			
-			int type = draw[x, y, index];
-
-			draw[x, y, index] *= -1;
-
-			for (int i = x + 1; i < _chunksize; i++) {
-				if (draw[i, y, index] == type) {
-					draw[i, y, index] *= -1;
-					width++;
-					continue;
-				}
-				
-				break; 
-			}
-
-			for (int i = y + 1; i < _chunksize; i++) {
-				bool full = true;	
-
-				for (int ii = x; ii < x + width; ii++) {
-					if (draw[ii, i, index] != type) {
-						full = false;
-						break;
-					}
-				}
-
-				if (full) {
-					for (int ii = x; ii < x + width; ii++) {
-						draw[ii, i, index] *= -1;
-					}
-
-					height++;
-					continue;
-				}
-
-				break;
-			}
-
-			return new Vector2(width, height);
-		}
-
-		public bool FaceObscured(int b, int c, bool[,,] obscure, int plane) {
-			return obscure[b, c, plane];      
-		}
-
-		public bool CubeExists(int x, int y, int z) {
-			return cubes[x, y, z] != null;
-		}
-
-		public int GetCubeType(int x, int y, int z) {
-			Cube? point = cubes[x, y, z];
-			if (point == null) { return -1; }
-			Cube cube = (Cube) point;
-			return cube.CubeType;
+			_loaded = true;
 		}
 
 		public void Render () {
-			GL.BindVertexArray(VAO);
-			GL.DrawArrays(PrimitiveType.Triangles, 0, points.Count);
+			if (!_loaded) { return; }
+
+			GL.BindVertexArray(_vao);
+			GL.DrawArrays(PrimitiveType.Triangles, 0, _pointCount);
 			GL.BindVertexArray(0);
 		}
 
+
+		// Private
+		private bool CheckFilled (int x, int y, int z) {
+			return (_filled[y, z] & 1 << x) != 0;
+		}
+
+		private bool CheckSpot (int row, int pos) {
+			return (row & 1 << pos) != 0;
+		}
+
+		private int GetSpot (int row, int pos) {
+			return row & (1 << pos);
+		}
 	}
 }

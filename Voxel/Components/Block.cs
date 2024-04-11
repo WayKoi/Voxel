@@ -25,7 +25,7 @@ namespace Voxel.Components {
 			// _texture = new Texture();
 		}
 
-		public Vertex3D[] GetVerts () {
+		/*public Vertex3D[] GetVerts () {
 			List<Vertex3D> points = new List<Vertex3D>();
 
 			for (int i = 0; i < cull.Length; i++) {
@@ -35,7 +35,7 @@ namespace Voxel.Components {
 			}
 
 			return points.ToArray();
-		}	
+		}	*/
 
 		public void CullFace (Face face) {
 			cull[(int) face] = true;

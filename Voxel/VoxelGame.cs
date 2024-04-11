@@ -15,11 +15,11 @@ using Voxel.Structs;
 
 namespace Voxel {
 	internal class VoxelGame : GameWindow {
-		private List<Cube> cube = new List<Cube>();
 		private List<PointLight> lights = new List<PointLight>();
 
 		private Camera Cam = new Camera();
 
+		// private Chunk chunk = new Chunk(new Vector3(0));
 		private World world = new World();
 
 		private Matrix4 Model, View, Projection;
@@ -126,9 +126,27 @@ namespace Voxel {
 			Projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(90.0f), 16f / 9f, 0.1f, FarPlane);
 			View = Cam.LookAt;
 
-			// chunk.Load();
+			/*for (int x = 0; x < 32; x++) {
+				for (int z = 0; z < 32; z++) {
+					int y = 16 + (int) Math.Round(8 * Math.Sin((x) / (Math.PI * 4)) + 6 * Math.Cos((z) / (Math.PI * 4)));
 
-			world.Load();
+					for (int h = y; h >= 0; h--) {
+						world.AddCube(0, x, h, z);
+					}
+				}
+			}*/
+
+			for (int x = -256; x < 256; x++) {
+				for (int z = -256; z < 256; z++) {
+					int y = 16 + (int) Math.Round(8 * Math.Sin(x / (Math.PI * 4)) + 6 * Math.Cos(z / (Math.PI * 4)));
+
+					for (int h = y; h >= -20; h--) {
+						world.AddCube(0, x, h, z);
+					}
+				}
+			}
+
+			world.Init();
 
 			Random rand = new Random();
 
@@ -137,7 +155,7 @@ namespace Voxel {
 			int offsetx = rand.Next(0, 30);
 			int offsetz = rand.Next(0, 30);
 
-			for (int x = -256; x < 256; x++) {
+			/*for (int x = -256; x < 256; x++) {
 				for (int z = -256; z < 256; z++) {
 					int y = (int) Math.Round(8 * Math.Sin((x + offsetx) / (Math.PI * 4)) + 6 * Math.Cos((z + offsetz) / (Math.PI * 4)));
 
@@ -148,7 +166,7 @@ namespace Voxel {
 				}
 			}
 
-			world.AddCubes(pos, cube);
+			world.AddCubes(pos, cube);*/
 
 			// lights.Add(new PointLight(new Vector3((float) (255 / 255.0), (float) (214 / 255.0), (float) (170 / 255.0)), new Vector3(16, 35, 16), 100));
 

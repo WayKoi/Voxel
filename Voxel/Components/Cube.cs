@@ -1,4 +1,5 @@
-﻿using OpenTK.Mathematics;
+﻿using OpenTK.Graphics.ES11;
+using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,223 +8,120 @@ using System.Threading.Tasks;
 using Voxel.Structs;
 
 namespace Voxel.Components {
-	internal struct Cube {
-		private int _id = -1;
+	public static class Cube {
+		private static Dictionary<int, CubeType> _types = new Dictionary<int, CubeType>();
+		private static int _counter = 1;
 
-		public int CubeType {
-			get { return _id; }
-		}
+		private static CubeType _default = new CubeType();
 
-		public Vector4 Colour {
-			get { return LookupColour(_id); }
-			set {
-				_id = LookupColour(value);
-			}
-		}
-
-		public Cube() {
-			Colour = new Vector4(1, 1, 1, 1);
-		}
-
-		public Cube(Vector4 colour) {
-			Colour = colour;
-		}
-
-		// Static Stuff
-
-		private static Dictionary<Vector4, int> _colourLookup = new Dictionary<Vector4, int>();
-		private static List<Vector4> _colours = new List<Vector4>();
-		private static int _types = 1;
-
-		public static int LookupColour(Vector4 colour) {
-			if (!_colourLookup.ContainsKey(colour)) {
-				_colourLookup.Add(colour, _types);
-				_colours.Add(colour);
-				_types++;
+		public static CubeType GetCube (int id) {
+			if (_types.ContainsKey(id)) {
+				return _types[id];
 			}
 
-			return _colourLookup[colour];
+			return _default;
 		}
 
-		public static Vector4 LookupColour(int id) {
-			if (id > _types || id < 0) {
-				return Vector4.One;
+		public static Vector4 GetCubeColour(int id, float x, float y, float z) {
+			if (_types.ContainsKey(id)) {
+				return _types[id].GetColour(x, y, z);
 			}
 
-			return _colours[id - 1];
+			return _default.GetColour(x, y, z);
 		}
 
-		private static Vertex3D[] _vertices = {
-			new Vertex3D(1f, 1f, 1f),
+		public static int AddType (CubeType type) {
+			_types.Add(_counter, type);
+			return _counter++;
+		}
 
-			new Vertex3D(0f, 1f, 1f),
-			new Vertex3D(1f, 0f, 1f),
-			new Vertex3D(1f, 1f, 0f),
+		public static Vertex3D[] GetVerts (Vector3 positon, Vector4 colour) {
+			List<Vertex3D> points = new List<Vertex3D>();
 
-			new Vertex3D(0f, 0f, 1f),
-			new Vertex3D(1f, 0f, 0f),
-			new Vertex3D(0f, 1f, 0f),
+			points.AddRange(GetFace(Face.Left, positon.X, positon.Y, positon.Z, colour));
+			points.AddRange(GetFace(Face.Right, positon.X, positon.Y, positon.Z, colour));
+			points.AddRange(GetFace(Face.Top, positon.X, positon.Y, positon.Z, colour));
+			points.AddRange(GetFace(Face.Bottom, positon.X, positon.Y, positon.Z, colour));
+			points.AddRange(GetFace(Face.Front, positon.X, positon.Y, positon.Z, colour));
+			points.AddRange(GetFace(Face.Back, positon.X, positon.Y, positon.Z, colour));
 
-			new Vertex3D(0f, 0f, 0f)
-		};
+			return points.ToArray();
+		}
 
-		public static Vertex3D[] GetFace (Face face, Vector3 Position, Vector4 Colour, Vector3? Scale = null) {
-			Vector3 scalar = new Vector3(1);
-		
-			if (Scale != null) {
-				scalar = (Vector3) Scale;
-			}
-
+		public static Vertex3D[] GetFace (Face face, float x, float y, float z, Vector4 colour, float size = 1) {
 			switch (face) {
-				case Face.Top:
-					return new Vertex3D[] {
-						// top face
-						new Vertex3D(_vertices[0].Position * scalar, Position, Colour) { Normal = new Vector3(0, 1, 0) },
-						new Vertex3D(_vertices[6].Position * scalar, Position, Colour) { Normal = new Vector3(0, 1, 0) },
-						new Vertex3D(_vertices[1].Position * scalar, Position, Colour) { Normal = new Vector3(0, 1, 0) },
-
-						new Vertex3D(_vertices[0].Position * scalar, Position, Colour) { Normal = new Vector3(0, 1, 0) },
-						new Vertex3D(_vertices[3].Position * scalar, Position, Colour) { Normal = new Vector3(0, 1, 0) },
-						new Vertex3D(_vertices[6].Position * scalar, Position, Colour) { Normal = new Vector3(0, 1, 0) }
-					};
-
-				case Face.Left:
-					return new Vertex3D[] {
-						// left face
-						new Vertex3D(_vertices[1].Position * scalar, Position, Colour) { Normal = new Vector3(-1, 0, 0) },
-						new Vertex3D(_vertices[6].Position * scalar, Position, Colour) { Normal = new Vector3(-1, 0, 0) },
-						new Vertex3D(_vertices[7].Position * scalar, Position, Colour) { Normal = new Vector3(-1, 0, 0) },
-
-						new Vertex3D(_vertices[1].Position * scalar, Position, Colour) { Normal = new Vector3(-1, 0, 0) },
-						new Vertex3D(_vertices[7].Position * scalar, Position, Colour) { Normal = new Vector3(-1, 0, 0) },
-						new Vertex3D(_vertices[4].Position * scalar, Position, Colour) { Normal = new Vector3(-1, 0, 0) },
-					};
-
-				case Face.Right:
-					return new Vertex3D[] {
-						// right face
-						new Vertex3D(_vertices[2].Position * scalar, Position, Colour) { Normal = new Vector3(1, 0, 0) },
-						new Vertex3D(_vertices[5].Position * scalar, Position, Colour) { Normal = new Vector3(1, 0, 0) },
-						new Vertex3D(_vertices[3].Position * scalar, Position, Colour) { Normal = new Vector3(1, 0, 0) },
-
-						new Vertex3D(_vertices[3].Position * scalar, Position, Colour) { Normal = new Vector3(1, 0, 0) },
-						new Vertex3D(_vertices[0].Position * scalar, Position, Colour) { Normal = new Vector3(1, 0, 0) },
-						new Vertex3D(_vertices[2].Position * scalar, Position, Colour) { Normal = new Vector3(1, 0, 0) },
-					};
-
-				case Face.Front:
-					return new Vertex3D[] {
-						// front face
-						new Vertex3D(_vertices[2].Position * scalar, Position, Colour) { Normal = new Vector3(0, 0, 1) },
-						new Vertex3D(_vertices[0].Position * scalar, Position, Colour) { Normal = new Vector3(0, 0, 1) },
-						new Vertex3D(_vertices[1].Position * scalar, Position, Colour) { Normal = new Vector3(0, 0, 1) },
-
-						new Vertex3D(_vertices[1].Position * scalar, Position, Colour) { Normal = new Vector3(0, 0, 1) },
-						new Vertex3D(_vertices[4].Position * scalar, Position, Colour) { Normal = new Vector3(0, 0, 1) },
-						new Vertex3D(_vertices[2].Position * scalar, Position, Colour) { Normal = new Vector3(0, 0, 1) },
-					};
-
 				case Face.Back:
 					return new Vertex3D[] {
-						// back face
-						new Vertex3D(_vertices[6].Position * scalar, Position, Colour) { Normal = new Vector3(0, 0, -1) },
-						new Vertex3D(_vertices[3].Position * scalar, Position, Colour) { Normal = new Vector3(0, 0, -1) },
-						new Vertex3D(_vertices[5].Position * scalar, Position, Colour) { Normal = new Vector3(0, 0, -1) },
+						new Vertex3D(x, y,				 z - size,	0, 0, -1, colour),
+						new Vertex3D(x, y + size,		 z - size,	0, 0, -1, colour),
+						new Vertex3D(x + size, y + size, z - size,	0, 0, -1, colour),
 
-						new Vertex3D(_vertices[5].Position * scalar, Position, Colour) { Normal = new Vector3(0, 0, -1) },
-						new Vertex3D(_vertices[7].Position * scalar, Position, Colour) { Normal = new Vector3(0, 0, -1) },
-						new Vertex3D(_vertices[6].Position * scalar, Position, Colour) { Normal = new Vector3(0, 0, -1) },
+						new Vertex3D(x + size, y + size, z - size,  0, 0, -1, colour),
+						new Vertex3D(x + size, y,		 z - size,	0, 0, -1, colour),
+						new Vertex3D(x, y,               z - size,  0, 0, -1, colour)
 					};
+				case Face.Front:
+					return (new Vertex3D[] {
+						new Vertex3D(x, y, z,				0, 0, 1, colour),
+						new Vertex3D(x, y + size, z,		0, 0, 1, colour),
+						new Vertex3D(x + size, y + size, z, 0, 0, 1, colour),
 
+						new Vertex3D(x + size, y + size, z, 0, 0, 1, colour),
+						new Vertex3D(x + size, y, z,		0, 0, 1, colour),
+						new Vertex3D(x, y, z,               0, 0, 1, colour)
+					}).Reverse().ToArray();
+				case Face.Left:
+					return new Vertex3D[] {
+						new Vertex3D(x, y, z,				-1, 0, 0, colour),
+						new Vertex3D(x, y + size, z,		-1, 0, 0, colour),
+						new Vertex3D(x, y + size, z - size, -1, 0, 0, colour),
+
+						new Vertex3D(x, y + size, z - size, -1, 0, 0, colour),
+						new Vertex3D(x, y, z - size,		-1, 0, 0, colour),
+						new Vertex3D(x, y, z,               -1, 0, 0, colour),
+					};
+				case Face.Right:
+					return new Vertex3D[] {
+						new Vertex3D(x + size, y, z,				1, 0, 0, colour),
+						new Vertex3D(x + size, y + size, z,			1, 0, 0, colour),
+						new Vertex3D(x + size, y + size, z - size,	1, 0, 0, colour),
+
+						new Vertex3D(x + size, y + size, z - size,  1, 0, 0, colour),
+						new Vertex3D(x + size, y, z - size,			1, 0, 0, colour),
+						new Vertex3D(x + size, y, z,                1, 0, 0, colour),
+					}.Reverse().ToArray(); ;
 				case Face.Bottom:
 					return new Vertex3D[] {
-						// bottom face
-						new Vertex3D(_vertices[7].Position * scalar, Position, Colour) { Normal = new Vector3(0, -1, 0) },
-						new Vertex3D(_vertices[5].Position * scalar, Position, Colour) { Normal = new Vector3(0, -1, 0) },
-						new Vertex3D(_vertices[2].Position * scalar, Position, Colour) { Normal = new Vector3(0, -1, 0) },
+						new Vertex3D(x, y, z,				0, -1, 0, colour),
+						new Vertex3D(x + size, y, z,		0, -1, 0, colour),
+						new Vertex3D(x + size, y, z - size, 0, -1, 0, colour),
 
-						new Vertex3D(_vertices[7].Position * scalar, Position, Colour) { Normal = new Vector3(0, -1, 0) },
-						new Vertex3D(_vertices[2].Position * scalar, Position, Colour) { Normal = new Vector3(0, -1, 0) },
-						new Vertex3D(_vertices[4].Position * scalar, Position, Colour) { Normal = new Vector3(0, -1, 0) },
+						new Vertex3D(x + size, y, z - size, 0, -1, 0, colour),
+						new Vertex3D(x, y, z - size,		0, -1, 0, colour),
+						new Vertex3D(x, y, z,               0, -1, 0, colour),
+					}.Reverse().ToArray(); ;
+				case Face.Top:
+					return new Vertex3D[] {
+						new Vertex3D(x, y + size, z,				0, 1, 0, colour),
+						new Vertex3D(x + size, y + size, z,			0, 1, 0, colour),
+						new Vertex3D(x + size, y + size, z - size,	0, 1, 0, colour),
+
+						new Vertex3D(x + size, y + size, z - size,	0, 1, 0, colour),
+						new Vertex3D(x, y + size, z - size,			0, 1, 0, colour),
+						new Vertex3D(x, y + size, z,				0, 1, 0, colour),
 					};
 			}
 
-			return new Vertex3D[0];
-		}
-
-		public static Vertex3D[] GetVerts (Vector3 Position, Vector4 Colour, Vector3? Scale = null) {
-			Vector3 scalar = new Vector3(1);
-
-			if (Scale != null) {
-				scalar = (Vector3) Scale;
-			}
-
-			Vertex3D[] verts = {
-				// top face
-				new Vertex3D(_vertices[0].Position * scalar, Position, Colour) { Normal = new Vector3(0, 1, 0) },
-				new Vertex3D(_vertices[6].Position * scalar, Position, Colour) { Normal = new Vector3(0, 1, 0) },
-				new Vertex3D(_vertices[1].Position * scalar, Position, Colour) { Normal = new Vector3(0, 1, 0) },
-
-				new Vertex3D(_vertices[0].Position * scalar, Position, Colour) { Normal = new Vector3(0, 1, 0) },
-				new Vertex3D(_vertices[3].Position * scalar, Position, Colour) { Normal = new Vector3(0, 1, 0) },
-				new Vertex3D(_vertices[6].Position * scalar, Position, Colour) { Normal = new Vector3(0, 1, 0) },
-
-				// left face
-				new Vertex3D(_vertices[1].Position * scalar, Position, Colour) { Normal = new Vector3(-1, 0, 0) },
-				new Vertex3D(_vertices[6].Position * scalar, Position, Colour) { Normal = new Vector3(-1, 0, 0) },
-				new Vertex3D(_vertices[7].Position * scalar, Position, Colour) { Normal = new Vector3(-1, 0, 0) },
-
-				new Vertex3D(_vertices[1].Position * scalar, Position, Colour) { Normal = new Vector3(-1, 0, 0) },
-				new Vertex3D(_vertices[7].Position * scalar, Position, Colour) { Normal = new Vector3(-1, 0, 0) },
-				new Vertex3D(_vertices[4].Position * scalar, Position, Colour) { Normal = new Vector3(-1, 0, 0) },
-
-				// right face
-				new Vertex3D(_vertices[2].Position * scalar, Position, Colour) { Normal = new Vector3(1, 0, 0) },
-				new Vertex3D(_vertices[5].Position * scalar, Position, Colour) { Normal = new Vector3(1, 0, 0) },
-				new Vertex3D(_vertices[3].Position * scalar, Position, Colour) { Normal = new Vector3(1, 0, 0) },
-
-				new Vertex3D(_vertices[3].Position * scalar, Position, Colour) { Normal = new Vector3(1, 0, 0) },
-				new Vertex3D(_vertices[0].Position * scalar, Position, Colour) { Normal = new Vector3(1, 0, 0) },
-				new Vertex3D(_vertices[2].Position * scalar, Position, Colour) { Normal = new Vector3(1, 0, 0) },
-
-				// front face
-				new Vertex3D(_vertices[2].Position * scalar, Position, Colour) { Normal = new Vector3(0, 0, 1) },
-				new Vertex3D(_vertices[0].Position * scalar, Position, Colour) { Normal = new Vector3(0, 0, 1) },
-				new Vertex3D(_vertices[1].Position * scalar, Position, Colour) { Normal = new Vector3(0, 0, 1) },
-
-				new Vertex3D(_vertices[1].Position * scalar, Position, Colour) { Normal = new Vector3(0, 0, 1) },
-				new Vertex3D(_vertices[4].Position * scalar, Position, Colour) { Normal = new Vector3(0, 0, 1) },
-				new Vertex3D(_vertices[2].Position * scalar, Position, Colour) { Normal = new Vector3(0, 0, 1) },
-
-				// back face
-				new Vertex3D(_vertices[6].Position * scalar, Position, Colour) { Normal = new Vector3(0, 0, -1) },
-				new Vertex3D(_vertices[3].Position * scalar, Position, Colour) { Normal = new Vector3(0, 0, -1) },
-				new Vertex3D(_vertices[5].Position * scalar, Position, Colour) { Normal = new Vector3(0, 0, -1) },
-
-				new Vertex3D(_vertices[5].Position * scalar, Position, Colour) { Normal = new Vector3(0, 0, -1) },
-				new Vertex3D(_vertices[7].Position * scalar, Position, Colour) { Normal = new Vector3(0, 0, -1) },
-				new Vertex3D(_vertices[6].Position * scalar, Position, Colour) { Normal = new Vector3(0, 0, -1) },
-
-				// bottom face
-				new Vertex3D(_vertices[7].Position * scalar, Position, Colour) { Normal = new Vector3(0, -1, 0) },
-				new Vertex3D(_vertices[5].Position * scalar, Position, Colour) { Normal = new Vector3(0, -1, 0) },
-				new Vertex3D(_vertices[2].Position * scalar, Position, Colour) { Normal = new Vector3(0, -1, 0) },
-
-				new Vertex3D(_vertices[7].Position * scalar, Position, Colour) { Normal = new Vector3(0, -1, 0) },
-				new Vertex3D(_vertices[2].Position * scalar, Position, Colour) { Normal = new Vector3(0, -1, 0) },
-				new Vertex3D(_vertices[4].Position * scalar, Position, Colour) { Normal = new Vector3(0, -1, 0) },
-			};
-
-			return verts;
+			return new Vertex3D[] {};
 		}
 	}
 
 	public enum Face {
-		Front = 0,
-		Back = 1,
+		Back = 0,
+		Front = 1,
 		Left = 2,
 		Right = 3,
-		Top = 4,
-		Bottom = 5
+		Bottom = 4,
+		Top = 5,
 	}
 }

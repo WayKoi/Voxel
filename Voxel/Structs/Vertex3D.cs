@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Voxel.Structs {
-	internal struct Vertex3D {
+	public struct Vertex3D {
 		public Vector3 Position;
 		public Vector3 Normal;
 		public Vector4 Colour;
