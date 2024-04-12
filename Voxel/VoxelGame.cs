@@ -63,6 +63,7 @@ namespace Voxel {
 			_shader.SetVector3("global.ambient", new Vector3(0.1f));
 			_shader.SetVector3("global.diffuse", new Vector3(0.0f));
 			_shader.SetVector3("global.specular", new Vector3(0.0f));
+
 			_shader.SetFloat("farPlane", FarPlane);
 			_shader.SetFloat("FogDensity", 0.8f);
 			_shader.SetFloat("FogStart", 0.4f);

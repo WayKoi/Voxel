@@ -41,6 +41,16 @@ namespace Voxel.Components {
 					edges[(int) Face.Bottom] = _chunks[(chunkPos.x, chunkPos.y - 1, chunkPos.z)].GetEdge(Face.Top);
 				}
 
+				// front chunk, back face
+				if (_chunks.ContainsKey((chunkPos.x, chunkPos.y, chunkPos.z + 1))) {
+					edges[(int) Face.Front] = _chunks[(chunkPos.x, chunkPos.y, chunkPos.z + 1)].GetEdge(Face.Back);
+				}
+
+				// Back chunk, front face
+				if (_chunks.ContainsKey((chunkPos.x, chunkPos.y, chunkPos.z - 1))) {
+					edges[(int) Face.Back] = _chunks[(chunkPos.x, chunkPos.y, chunkPos.z - 1)].GetEdge(Face.Front);
+				}
+
 				pair.Value.Load(edges);
 			}
 

@@ -79,6 +79,16 @@ namespace Voxel.Components {
 						lines.Add(_filled[0, z]);
 					}
 					break;
+				case Face.Front:
+					for (int y = 0; y < Size; y++) {
+						lines.Add(_filled[y, 31]);
+					}
+					break;
+				case Face.Back:
+					for (int y = 0; y < Size; y++) {
+						lines.Add(_filled[y, 0]);
+					}
+					break;
 			}
 
 			return lines.ToArray();
@@ -147,10 +157,14 @@ namespace Voxel.Components {
 
 					if (z < Size - 1) {
 						front = _filled[y, z] ^ _filled[y, z + 1];
+					} else {
+						front = _filled[y, z] ^ checks[(int) Face.Front][y];
 					}
 
 					if (z > 0) {
 						back = _filled[y, z] ^ _filled[y, z - 1];
+					} else {
+						back = _filled[y, z] ^ checks[(int) Face.Back][y];
 					}
 
 					float py = _position.Y + y;
