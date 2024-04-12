@@ -1,21 +1,92 @@
-﻿using OpenTK.Mathematics;
+﻿using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
+using OpenTK.Windowing.Common;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.XPath;
+using Voxel.Shaders;
+using Voxel.Structs;
 
 namespace Voxel.Components {
 	internal class World {
-
 		private Dictionary<(int, int, int), Chunk> _chunks = new Dictionary<(int, int, int), Chunk>();
-		private bool _initialized = false;
+		private bool _initialized = false, _loaded = false;
+
+		private Matrix4 Model, View, Projection;
+
+		private float _farplane = 400.0f;
+
+		public float FarPlane {
+			get { return _farplane; }
+			protected set {
+				if (_farplane == value) { return; }
+				_farplane = value;
+				Projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(90.0f), 16f / 9f, 0.1f, _farplane);
+			}
+		}
+
+		private Light _worldlight = new Light();
+		private Camera _camera = new Camera();
+
+		private Shader _shader = new Shader("./Shaders/3D/basic.vert", "./Shaders/3D/basic.frag");
+		private Shader _lightShader = new Shader("./Shaders/3D/basic.vert", "./Shaders/3D/light.frag");
+
+		private List<PointLight> _lights = new List<PointLight>();
+
+		protected Fog Fog = new Fog(new Vector3(0.8f, 0.8f, 0.9f), 0.8f, 0.4f);
+
+		public Light WorldLight {
+			get { return _worldlight; }
+			protected set { _worldlight = value; }
+		}
 
 		public World() { }
 
+		public virtual void Build () {
+			for (int x = -256; x < 256; x++) {
+				for (int z = -256; z < 256; z++) {
+					int y = 16 + (int) Math.Round(8 * Math.Sin(x / (Math.PI * 4)) + 6 * Math.Cos(z / (Math.PI * 4)));
+
+					for (int h = y; h >= 0; h--) {
+						AddCube(0, x, h, z);
+					}
+				}
+			}
+
+			Random rand = new Random();
+
+			for (int i = 0; i < 100; i++) {
+				_lights.Add(
+					new PointLight(
+						new Vector3(
+							(float) rand.NextDouble(),
+							(float) rand.NextDouble(),
+							(float) rand.NextDouble()
+						),
+						new Vector3(
+							rand.Next(-256, 256),
+							rand.Next(10, 40),
+							rand.Next(-256, 256)
+						),
+						rand.Next(30, 60)
+					)
+				);
+			}
+		}
+
 		public void Init () {
 			if (_initialized) { return; }
+
+			Build();
+
+			_shader.Load();
+			_lightShader.Load();
 
 			foreach (KeyValuePair<(int, int, int), Chunk> pair in _chunks) {
 				int[][] edges = new int[6][];
@@ -57,6 +128,23 @@ namespace Voxel.Components {
 			_initialized = true;
 		}
 
+		public void Load () {
+			if (_loaded) { return; }
+
+			Model = Matrix4.Identity;
+			Projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(90.0f), 16f / 9f, 0.1f, _farplane);
+			View = _camera.LookAt;
+
+			foreach (PointLight light in _lights) {
+				light.Load();
+			}
+
+			_shader.Load();
+			_lightShader.Load();
+
+			_loaded = true;
+		}
+
 		public void AddCube (int id, int x, int y, int z) {
 			bool[] pos = new bool[] {
 				x < 0,
@@ -92,71 +180,65 @@ namespace Voxel.Components {
 			_chunks[(cx, cy, cz)].AddCubes(id, px, py, pz);
 		}
 
+		public virtual void Update(FrameEventArgs args, MouseState mouse, KeyboardState state) {
+			_camera.Update(args.Time, mouse.Delta, state);
+			_camera.Move(_camera.Speed);
+			View = _camera.LookAt;
+
+			// update which lights get rendered here
+
+		}
+
 		public void Render () {
+			GL.ClearColor(Fog.Colour.X, Fog.Colour.Y, Fog.Colour.Z, 1);
+			GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+
+			_shader.SetMatrix4("view", View);
+			_shader.SetMatrix4("model", Model);
+			_shader.SetMatrix4("projection", Projection);
+
+			_shader.SetVector3("viewPos", _camera.Position);
+
+			_lightShader.SetMatrix4("view", View);
+			_lightShader.SetMatrix4("model", Model);
+			_lightShader.SetMatrix4("projection", Projection);
+
+			_shader.SetVector3("global.direction", _worldlight.Direction);
+			_shader.SetVector3("global.ambient", _worldlight.Ambient);
+			_shader.SetVector3("global.diffuse", _worldlight.Diffuse);
+			_shader.SetVector3("global.specular", _worldlight.Specular);
+
+			_shader.SetFloat("farPlane", FarPlane);
+
+			_shader.SetFloat("FogDensity", Fog.Density);
+			_shader.SetFloat("FogStart", Fog.Start);
+			_shader.SetVector3("FogColour", Fog.Colour);
+
+			for (int i = 0; i < _lights.Count; i++) {
+				_lights[i].AddToShader(i, _shader);
+			}
+
+			_shader.SetInt("lightCount", _lights.Count);
+
+			_shader.Use();
+
 			foreach (KeyValuePair<(int, int, int), Chunk> pair in _chunks) {
+				float distance = pair.Value.GetDistance(_camera.Position);
+				if (distance > _farplane + Chunk.Size) { continue; }
+
+				if (distance > Chunk.Size * 2) {
+					float angle = pair.Value.GetAngle(_camera.Position, _camera.GetViewDirection());
+					if (angle > Math.PI / 2) { continue; }
+				}
+
 				pair.Value.Render();
 			}
-		}
 
-		/*private Dictionary<(int, int, int), Chunk> _chunks = new Dictionary<(int, int, int), Chunk>();
+			_lightShader.Use();
 
-		private bool _loaded = false;
-
-		public World() { }
-
-		public void Load() {
-			if (_loaded) { return; }
-			_loaded = true;
-
-			foreach (KeyValuePair<(int, int, int), Chunk> pair in _chunks) {
-				pair.Value.Load();
+			for (int i = 0; i < _lights.Count; i++) {
+				_lights[i].Render(_lightShader);
 			}
 		}
-
-		public void AddCube(int cx, int cy, int cz, int x, int y, int z, Cube cube, bool update = true) {
-			if (!_chunks.ContainsKey((x, y, z))) {
-				Chunk piece = new Chunk(x * 32 + (x < 0 ? 1 : 0), y * 32 + (y < 0 ? 1 : 0), z * 32 + (z < 0 ? 1 : 0));
-				if (_loaded) { piece.Load(); }
-				_chunks.Add((x, y, z), piece);
-			}
-
-			cx = cx < 0 ? 31 - (Math.Abs(cx) % 32) : cx % 32;
-			cy = cy < 0 ? 31 - (Math.Abs(cy) % 32) : cy % 32;
-			cz = cz < 0 ? 31 - (Math.Abs(cz) % 32) : cz % 32;
-
-			Chunk chunk = _chunks[(x, y, z)];
-			chunk.Add(cube, new Vector3i(cx, cy, cz));
-			if (update) { chunk.Update(); }
-		}
-
-		public void AddCubes(List<Vector3i> positions, List<Cube> cubes) {
-			List<(int, int, int)> adds = new List<(int, int, int)>();
-
-			int poscount = positions.Count, cubecount = cubes.Count;
-			for (int i = 0; i < poscount && i < cubecount; i++) {
-				(int x, int y, int z) chunk = (
-					positions[i].X / 32 + (positions[i].X < 0 ? -1 : 0),
-					positions[i].Y / 32 + (positions[i].Y < 0 ? -1 : 0),
-					positions[i].Z / 32 + (positions[i].Z < 0 ? -1 : 0)
-				);
-
-				if (!adds.Contains(chunk)) { adds.Add(chunk); }
-
-				AddCube(positions[i].X, positions[i].Y, positions[i].Z, chunk.x, chunk.y, chunk.z, cubes[i], false);
-			}
-
-			foreach ((int x, int y, int z) chunk in adds) {
-				bool[,,] obscure = new bool[32, 32, 6];
-
-				_chunks[chunk].Update(obscure);
-			}
-		}
-
-		public void Render() {
-			foreach (KeyValuePair<(int, int, int), Chunk> pair in _chunks) {
-				pair.Value.Render();
-			}
-		}*/
-
 	}
 }

@@ -36,6 +36,18 @@ namespace Voxel.Components {
 			UpdateLookAt();
 		}
 
+		public Vector3 GetViewDirection () {
+			Vector3 view = new Vector3(
+				(float) Math.Cos(Rotation.X + MathHelper.PiOver2),
+				(float) Math.Tan(-Rotation.Y),
+				(float) Math.Sin(Rotation.X + MathHelper.PiOver2)
+			);
+
+			view.Normalize();
+
+			return view;
+		}
+
 		private void UpdateLookAt() {
 			Vector3 offset = new Vector3(
 				(float) Math.Cos(Rotation.X + MathHelper.PiOver2),

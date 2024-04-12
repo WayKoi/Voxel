@@ -30,7 +30,7 @@ namespace Voxel.Components {
 
 		public void AddCubes (int id, int x, int y, int z) {
 			if (x < 0 || x >= Size || y < 0 || y >= Size || z < 0 || z >= Size) { 
-				Console.WriteLine("Misplaced Cube at pos " + x + "  " + y + "  " + z);
+				Error.Report("Misplaced Cube at pos " + x + "  " + y + "  " + z);
 				return; 
 			}
 
@@ -38,6 +38,16 @@ namespace Voxel.Components {
 			if (!CheckFilled(x, y, z)) {
 				_filled[y, z] += 1 << x; // add a single bit to the proper position
 			}
+		}
+
+		public float GetDistance (Vector3 from) {
+			Vector3 center = _position + new Vector3((float) (Size / 2.0));
+			return Vector3.Distance(center, from);
+		}
+
+		public float GetAngle(Vector3 point, Vector3 from) {
+			Vector3 center = _position + new Vector3((float) (Size / 2.0)) - point;
+			return Vector3.CalculateAngle(center, from);
 		}
 
 		public int[] GetEdge (Face face) {
