@@ -12,7 +12,7 @@ namespace Voxel.Components {
 		private static Dictionary<int, CubeType> _types = new Dictionary<int, CubeType>();
 		private static int _counter = 1;
 
-		private static CubeType _default = new CubeType();
+		private static CubeType _default = new CubeType(1, 1);
 
 		public static CubeType GetCube (int id) {
 			if (_types.ContainsKey(id)) {

@@ -8,8 +8,6 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.PortableExecutable;
 using System.Text;
-using System.Threading.Tasks;
-using System.Xml.XPath;
 using Voxel.Shaders;
 using Voxel.Structs;
 
@@ -31,7 +29,13 @@ namespace Voxel.Components {
 			}
 		}
 
-		private Light _worldlight = new Light();
+		private Light _worldlight = new Light(0, 0, 0);
+
+		public Light WorldLight {
+			get { return _worldlight; }
+			protected set { _worldlight = value; }
+		}
+
 		private Camera _camera = new Camera();
 
 		private Shader _shader = new Shader("./Shaders/3D/basic.vert", "./Shaders/3D/basic.frag");
@@ -39,50 +43,22 @@ namespace Voxel.Components {
 
 		private List<PointLight> _lights = new List<PointLight>();
 
-		protected Fog Fog = new Fog(new Vector3(0.8f, 0.8f, 0.9f), 0.8f, 0.4f);
-
-		public Light WorldLight {
-			get { return _worldlight; }
-			protected set { _worldlight = value; }
-		}
+		protected Fog Fog = new Fog(new Vector3(0, 0, 0), 0.8f, 0.4f);
 
 		public World() { }
 
-		public virtual void Build () {
-			for (int x = -256; x < 256; x++) {
-				for (int z = -256; z < 256; z++) {
-					int y = 16 + (int) Math.Round(8 * Math.Sin(x / (Math.PI * 4)) + 6 * Math.Cos(z / (Math.PI * 4)));
+		public virtual void Build () { }
+		protected virtual void Setup() { }
 
-					for (int h = y; h >= 0; h--) {
-						AddCube(0, x, h, z);
-					}
-				}
-			}
-
-			Random rand = new Random();
-
-			for (int i = 0; i < 100; i++) {
-				_lights.Add(
-					new PointLight(
-						new Vector3(
-							(float) rand.NextDouble(),
-							(float) rand.NextDouble(),
-							(float) rand.NextDouble()
-						),
-						new Vector3(
-							rand.Next(-256, 256),
-							rand.Next(10, 40),
-							rand.Next(-256, 256)
-						),
-						rand.Next(30, 60)
-					)
-				);
-			}
+		protected void AddLight (PointLight light) {
+			_lights.Add(light);
+			if (_loaded) { light.Load(); }
 		}
 
 		public void Init () {
 			if (_initialized) { return; }
 
+			Setup();
 			Build();
 
 			_shader.Load();
@@ -193,15 +169,16 @@ namespace Voxel.Components {
 			GL.ClearColor(Fog.Colour.X, Fog.Colour.Y, Fog.Colour.Z, 1);
 			GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
+			RenderChunks();
+			RenderLights();
+		}
+
+		private void RenderChunks () {
 			_shader.SetMatrix4("view", View);
 			_shader.SetMatrix4("model", Model);
 			_shader.SetMatrix4("projection", Projection);
 
 			_shader.SetVector3("viewPos", _camera.Position);
-
-			_lightShader.SetMatrix4("view", View);
-			_lightShader.SetMatrix4("model", Model);
-			_lightShader.SetMatrix4("projection", Projection);
 
 			_shader.SetVector3("global.direction", _worldlight.Direction);
 			_shader.SetVector3("global.ambient", _worldlight.Ambient);
@@ -212,6 +189,7 @@ namespace Voxel.Components {
 
 			_shader.SetFloat("FogDensity", Fog.Density);
 			_shader.SetFloat("FogStart", Fog.Start);
+			_shader.SetFloat("FogEnd", Fog.End);
 			_shader.SetVector3("FogColour", Fog.Colour);
 
 			for (int i = 0; i < _lights.Count; i++) {
@@ -233,6 +211,21 @@ namespace Voxel.Components {
 
 				pair.Value.Render();
 			}
+		}
+
+		private void RenderLights () {
+			_lightShader.SetMatrix4("view", View);
+			_lightShader.SetMatrix4("model", Model);
+			_lightShader.SetMatrix4("projection", Projection);
+
+			_lightShader.SetVector3("viewPos", _camera.Position);
+
+			_lightShader.SetFloat("farPlane", FarPlane);
+
+			_lightShader.SetFloat("FogDensity", Fog.Density);
+			_lightShader.SetFloat("FogStart", Fog.Start);
+			_lightShader.SetFloat("FogEnd", Fog.End);
+			_lightShader.SetVector3("FogColour", Fog.Colour);
 
 			_lightShader.Use();
 

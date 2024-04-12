@@ -25,11 +25,14 @@ in vec3 Normal;
 uniform Globallight global;
 uniform PointLight lights[100];
 uniform int lightCount;
+
 uniform vec3 viewPos;
+
 uniform float farPlane;
 uniform float FogDensity;
 uniform vec3 FogColour;
 uniform float FogStart;
+uniform float FogEnd;
 
 void main()
 {
@@ -70,10 +73,11 @@ void main()
         }
     }
 
-    float FogEnd = farPlane * 0.9;
+    // Fog calculations
+    float end = farPlane * FogEnd;
     float FogStartDistance = farPlane * FogStart;
     float camDist = length(FragPos - viewPos);
-    float distRatio = 4.0 * max(camDist - FogStartDistance, 0) / (FogEnd - FogStartDistance);
+    float distRatio = 4.0 * max(camDist - FogStartDistance, 0) / (end - FogStartDistance);
     float FogFactor = exp(-distRatio * FogDensity);
 
     FragColor = mix(vec4(FogColour, 1.0), vec4(result, Colour.w), FogFactor);

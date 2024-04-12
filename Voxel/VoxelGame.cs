@@ -12,10 +12,11 @@ using System.Threading.Tasks;
 using Voxel.Components;
 using Voxel.Shaders;
 using Voxel.Structs;
+using Voxel.Testing;
 
 namespace Voxel {
 	internal class VoxelGame : GameWindow {
-		private World world = new World();
+		private TestWorld world = new TestWorld();
 
 		public VoxelGame(int width, int height, string title) : 
 			base(
