@@ -54,6 +54,10 @@ namespace Voxel.Components {
 				z < 0
 			};
 
+			x += pos[0] ? 1 : 0;
+			y += pos[1] ? 1 : 0;
+			z += pos[2] ? 1 : 0;
+
 			int cx = x / Chunk.Size + (pos[0] ? -1 : 0);
 			int cy = y / Chunk.Size + (pos[1] ? -1 : 0);
 			int cz = z / Chunk.Size + (pos[2] ? -1 : 0);
@@ -71,9 +75,9 @@ namespace Voxel.Components {
 				);
 			}
 
-			int px = pos[0] ? (Chunk.Size - 1) - (Math.Abs(x + 1) % Chunk.Size) : x % Chunk.Size;
-			int py = pos[1] ? (Chunk.Size - 1) - (Math.Abs(y + 1) % Chunk.Size) : y % Chunk.Size;
-			int pz = pos[2] ? (Chunk.Size - 1) - (Math.Abs(z + 1) % Chunk.Size) : z % Chunk.Size;
+			int px = pos[0] ? Chunk.Size - 1 - (Math.Abs(x) % Chunk.Size) : x % Chunk.Size;
+			int py = pos[1] ? Chunk.Size - 1 - (Math.Abs(y) % Chunk.Size) : y % Chunk.Size;
+			int pz = pos[2] ? Chunk.Size - 1 - (Math.Abs(z) % Chunk.Size) : z % Chunk.Size;
 
 			_chunks[(cx, cy, cz)].AddCubes(id, px, py, pz);
 		}

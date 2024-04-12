@@ -29,9 +29,10 @@ namespace Voxel.Components {
 		}
 
 		public void AddCubes (int id, int x, int y, int z) {
-			if (x < 0 || x >= Size) { return; }
-			if (y < 0 || y >= Size) { return; }
-			if (z < 0 || z >= Size) { return; }
+			if (x < 0 || x >= Size || y < 0 || y >= Size || z < 0 || z >= Size) { 
+				Console.WriteLine("Misplaced Cube at pos " + x + "  " + y + "  " + z);
+				return; 
+			}
 
 			_cubetypes[x, y, z] = id;
 			if (!CheckFilled(x, y, z)) {
