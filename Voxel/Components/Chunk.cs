@@ -40,6 +40,17 @@ namespace Voxel.Components {
 			}
 		}
 
+		// returns -1 if one is not found
+		public int GetTopCube (int x, int z) {
+			for (int y = Size - 1; y >= 0; y--) {
+				if (CheckSpot(_filled[y, z], x)) {
+					return y;
+				}
+			}
+
+			return -1;
+		}
+
 		public float GetDistance (Vector3 from) {
 			Vector3 center = _position + new Vector3((float) (Size / 2.0));
 			return Vector3.Distance(center, from);

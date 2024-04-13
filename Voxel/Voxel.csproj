@@ -17,6 +17,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="Stockpile">
+      <HintPath>..\..\Stockpile\bin\Debug\net6.0\Stockpile.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="Shaders\3D\basic.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -25,6 +31,9 @@
     </None>
     <None Update="Shaders\3D\light.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Structures\test.struct">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 

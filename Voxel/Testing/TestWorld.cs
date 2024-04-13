@@ -12,6 +12,8 @@ namespace Voxel.Testing {
 
 		private int type = 0;
 
+		private Structure _rod = new Structure("./Structures/test.struct");
+
 		protected override void Setup() {
 			base.Setup();
 
@@ -51,6 +53,14 @@ namespace Voxel.Testing {
 						),
 						rand.Next(30, 60)
 					)
+				);
+			}
+
+			for (int i = 0; i < 100; i++) {
+				PlaceStructure(
+					_rod, 
+					rand.Next(-200, 200),
+					rand.Next(-200, 200)
 				);
 			}
 		}

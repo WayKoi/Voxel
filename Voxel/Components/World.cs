@@ -20,6 +20,9 @@ namespace Voxel.Components {
 
 		private float _farplane = 400.0f;
 
+		private Vector3i _max = new Vector3i(0);
+		private Vector3i _min = new Vector3i(0);
+
 		public float FarPlane {
 			get { return _farplane; }
 			protected set {
@@ -53,6 +56,48 @@ namespace Voxel.Components {
 		protected void AddLight (PointLight light) {
 			_lights.Add(light);
 			if (_loaded) { light.Load(); }
+		}
+
+		protected void PlaceStructure (Structure str, int x, int z) {
+			Chunk? found = null;
+
+			bool[] pos = new bool[] {
+				x < 0,
+				z < 0
+			};
+
+			x += pos[0] ? 1 : 0;
+			z += pos[1] ? 1 : 0;
+
+			int cx = x / Chunk.Size + (pos[0] ? -1 : 0);
+			int cz = z / Chunk.Size + (pos[1] ? -1 : 0);
+
+			int px = pos[0] ? Chunk.Size - 1 - (Math.Abs(x) % Chunk.Size) : x % Chunk.Size;
+			int pz = pos[1] ? Chunk.Size - 1 - (Math.Abs(z) % Chunk.Size) : z % Chunk.Size;
+
+			int y = 0;
+
+			for (int i = _max.Y; i >= _min.Y; i--) {
+				if (_chunks.ContainsKey((cx, i, cz))) {
+					found = _chunks[(cx, i, cz)];
+
+					y = found.GetTopCube(px, pz);
+					if (y == -1) {
+						found = null;
+					} else {
+						y += (i * Chunk.Size);
+						break;
+					}
+				}
+			}
+
+			if (found != null) {
+				List<StructCube> add = str.Place(x, y, z);
+
+				foreach (StructCube cube in add) {
+					AddCube(cube.Type, cube.Position.X, cube.Position.Y, cube.Position.Z);
+				}
+			}
 		}
 
 		public void Init () {
@@ -147,6 +192,15 @@ namespace Voxel.Components {
 						)
 					)
 				);
+
+				if (cx > _max.X) { _max.X = cx; }
+				if (cx < _min.X) { _min.X = cx; }
+
+				if (cy > _max.Y) { _max.Y = cy; }
+				if (cy > _max.Y) { _min.Y = cy; }
+				
+				if (cz > _max.Z) { _max.Z = cz; }
+				if (cz > _max.Z) { _min.Z = cz; }
 			}
 
 			int px = pos[0] ? Chunk.Size - 1 - (Math.Abs(x) % Chunk.Size) : x % Chunk.Size;
