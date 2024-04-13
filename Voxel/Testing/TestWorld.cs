@@ -17,9 +17,11 @@ namespace Voxel.Testing {
 		protected override void Setup() {
 			base.Setup();
 
-			Fog = new Fog(new Vector3(0.7f, 0.4f, 0.2f), 1, 0.05f);
+			Fog = new Fog(new Vector3(0.6f, 0.5f, 0f), 1, 0.1f);
 
-			type = Cube.AddType(new StaticCubeType(new Vector3(0.5f, 1, 0.5f), 1, 1));
+			FarPlane = 400f;
+
+			// type = Cube.AddType(new StaticCubeType(new Vector3(0.5f, 1, 0.5f), 1, 1));
 		}
 
 		public override void Build() {
@@ -37,14 +39,14 @@ namespace Voxel.Testing {
 
 			Random rand = new Random();
 
-			for (int i = 0; i < 100; i++) {
+			/*for (int i = 0; i < 100; i++) {
 				AddLight(
 					new PointLight(
 						new Vector3(
 							1
-						/*(float) rand.NextDouble(),
+						*//*(float) rand.NextDouble(),
 						(float) rand.NextDouble(),
-						(float) rand.NextDouble()*/
+						(float) rand.NextDouble()*//*
 						),
 						new Vector3(
 							rand.Next(-256, 256),
@@ -54,7 +56,7 @@ namespace Voxel.Testing {
 						rand.Next(30, 60)
 					)
 				);
-			}
+			}*/
 
 			for (int i = 0; i < 100; i++) {
 				PlaceStructure(

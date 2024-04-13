@@ -14,7 +14,7 @@ using Voxel.Structs;
 namespace Voxel.Components {
 	internal class World {
 		private Dictionary<(int, int, int), Chunk> _chunks = new Dictionary<(int, int, int), Chunk>();
-		private bool _initialized = false, _loaded = false;
+		private bool _initialized = false, _loaded = false, _disposed = false;
 
 		private Matrix4 Model, View, Projection;
 
@@ -47,6 +47,8 @@ namespace Voxel.Components {
 		private List<PointLight> _lights = new List<PointLight>();
 
 		protected Fog Fog = new Fog(new Vector3(0, 0, 0), 0.8f, 0.4f);
+
+		private List<KeyValuePair<(int, int, int), Chunk>> _loadQ = new List<KeyValuePair<(int, int, int), Chunk>>();
 
 		public World() { }
 
@@ -95,61 +97,38 @@ namespace Voxel.Components {
 				List<StructCube> add = str.Place(x, y, z);
 
 				foreach (StructCube cube in add) {
-					AddCube(cube.Type, cube.Position.X, cube.Position.Y, cube.Position.Z);
+					if (cube.CubeType == StructCubeType.Cube) {
+						AddCube(cube.Type, cube.Position.X, cube.Position.Y, cube.Position.Z);
+					} else {
+						if (cube.Light == null) { continue; }
+						LightDef def = ((LightDef) cube.Light);
+
+						AddLight(new PointLight(def.Light, cube.Position, def.Distance));
+					}
 				}
 			}
 		}
 
 		public void Init () {
+			if (_disposed) {
+				Error.Report("Trying to initialize a world that was previously disposed");
+				return;
+			}
+
 			if (_initialized) { return; }
 
 			Setup();
 			Build();
 
-			_shader.Load();
-			_lightShader.Load();
-
-			foreach (KeyValuePair<(int, int, int), Chunk> pair in _chunks) {
-				int[][] edges = new int[6][];
-				(int x, int y, int z) chunkPos = pair.Key;
-
-				// left chunk, right face
-				if (_chunks.ContainsKey((chunkPos.x - 1, chunkPos.y, chunkPos.z))) {
-					edges[(int) Face.Left] = _chunks[(chunkPos.x - 1, chunkPos.y, chunkPos.z)].GetEdge(Face.Right);
-				}
-
-				// right chunk, left face
-				if (_chunks.ContainsKey((chunkPos.x + 1, chunkPos.y, chunkPos.z))) {
-					edges[(int) Face.Right] = _chunks[(chunkPos.x + 1, chunkPos.y, chunkPos.z)].GetEdge(Face.Left);
-				}
-
-				// top chunk, bottom face
-				if (_chunks.ContainsKey((chunkPos.x, chunkPos.y + 1, chunkPos.z))) {
-					edges[(int) Face.Top] = _chunks[(chunkPos.x, chunkPos.y + 1, chunkPos.z)].GetEdge(Face.Bottom);
-				}
-
-				// bottom chunk, top face
-				if (_chunks.ContainsKey((chunkPos.x, chunkPos.y - 1, chunkPos.z))) {
-					edges[(int) Face.Bottom] = _chunks[(chunkPos.x, chunkPos.y - 1, chunkPos.z)].GetEdge(Face.Top);
-				}
-
-				// front chunk, back face
-				if (_chunks.ContainsKey((chunkPos.x, chunkPos.y, chunkPos.z + 1))) {
-					edges[(int) Face.Front] = _chunks[(chunkPos.x, chunkPos.y, chunkPos.z + 1)].GetEdge(Face.Back);
-				}
-
-				// Back chunk, front face
-				if (_chunks.ContainsKey((chunkPos.x, chunkPos.y, chunkPos.z - 1))) {
-					edges[(int) Face.Back] = _chunks[(chunkPos.x, chunkPos.y, chunkPos.z - 1)].GetEdge(Face.Front);
-				}
-
-				pair.Value.Load(edges);
-			}
-
 			_initialized = true;
 		}
 
 		public void Load () {
+			if (_disposed) {
+				Error.Report("Trying to load a world that was previously disposed");
+				return;
+			}
+
 			if (_loaded) { return; }
 
 			Model = Matrix4.Identity;
@@ -164,6 +143,43 @@ namespace Voxel.Components {
 			_lightShader.Load();
 
 			_loaded = true;
+		}
+
+		private void LoadChunk (KeyValuePair<(int, int, int), Chunk> pair) {
+			int[][] edges = new int[6][];
+			(int x, int y, int z) chunkPos = pair.Key;
+
+			// left chunk, right face
+			if (_chunks.ContainsKey((chunkPos.x - 1, chunkPos.y, chunkPos.z))) {
+				edges[(int) Face.Left] = _chunks[(chunkPos.x - 1, chunkPos.y, chunkPos.z)].GetEdge(Face.Right);
+			}
+
+			// right chunk, left face
+			if (_chunks.ContainsKey((chunkPos.x + 1, chunkPos.y, chunkPos.z))) {
+				edges[(int) Face.Right] = _chunks[(chunkPos.x + 1, chunkPos.y, chunkPos.z)].GetEdge(Face.Left);
+			}
+
+			// top chunk, bottom face
+			if (_chunks.ContainsKey((chunkPos.x, chunkPos.y + 1, chunkPos.z))) {
+				edges[(int) Face.Top] = _chunks[(chunkPos.x, chunkPos.y + 1, chunkPos.z)].GetEdge(Face.Bottom);
+			}
+
+			// bottom chunk, top face
+			if (_chunks.ContainsKey((chunkPos.x, chunkPos.y - 1, chunkPos.z))) {
+				edges[(int) Face.Bottom] = _chunks[(chunkPos.x, chunkPos.y - 1, chunkPos.z)].GetEdge(Face.Top);
+			}
+
+			// front chunk, back face
+			if (_chunks.ContainsKey((chunkPos.x, chunkPos.y, chunkPos.z + 1))) {
+				edges[(int) Face.Front] = _chunks[(chunkPos.x, chunkPos.y, chunkPos.z + 1)].GetEdge(Face.Back);
+			}
+
+			// Back chunk, front face
+			if (_chunks.ContainsKey((chunkPos.x, chunkPos.y, chunkPos.z - 1))) {
+				edges[(int) Face.Back] = _chunks[(chunkPos.x, chunkPos.y, chunkPos.z - 1)].GetEdge(Face.Front);
+			}
+
+			pair.Value.Load(edges);
 		}
 
 		public void AddCube (int id, int x, int y, int z) {
@@ -211,15 +227,66 @@ namespace Voxel.Components {
 		}
 
 		public virtual void Update(FrameEventArgs args, MouseState mouse, KeyboardState state) {
+			if (_disposed) { return; }
+
 			_camera.Update(args.Time, mouse.Delta, state);
 			_camera.Move(_camera.Speed);
 			View = _camera.LookAt;
 
 			// update which lights get rendered here
 
+
+			// Load chunks
+			foreach (KeyValuePair<(int, int, int), Chunk> pair in _chunks) {
+				if (_loadQ.Contains(pair)) { continue; }
+
+				float distance = pair.Value.GetDistance(_camera.Position);
+				if (distance > _farplane + Chunk.Size) {
+					pair.Value.Unload();
+					continue; 
+				}
+
+				_loadQ.Add(pair);
+			}
+
+			if (_loadQ.Count > 0) {
+				LoadChunk(_loadQ[0]);
+				_loadQ.RemoveAt(0);
+			}
 		}
 
+		public void Unload () {
+			if (!_loaded) { return; }
+
+			foreach (KeyValuePair<(int, int, int), Chunk> chunk in _chunks) {
+				chunk.Value.Unload();
+			}
+
+			_loaded = false;
+		}
+
+		public void Dispose () {
+			if (_disposed) { return; }
+
+			OnDispose();
+
+			_shader.Dispose();
+			_lightShader.Dispose();
+
+			foreach (KeyValuePair<(int, int, int), Chunk> chunk in _chunks) {
+				chunk.Value.Dispose();
+			}
+
+			_chunks.Clear();
+
+			_disposed = true;
+		}
+
+		protected virtual void OnDispose() {  }
+
 		public void Render () {
+			if (_disposed) { return; }
+
 			GL.ClearColor(Fog.Colour.X, Fog.Colour.Y, Fog.Colour.Z, 1);
 			GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 

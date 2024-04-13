@@ -9,9 +9,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using Voxel.Components;
-using Voxel.Shaders;
-using Voxel.Structs;
 using Voxel.Testing;
 
 namespace Voxel {

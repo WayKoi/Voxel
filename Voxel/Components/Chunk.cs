@@ -17,7 +17,7 @@ namespace Voxel.Components {
 		private int[,,] _cubetypes;
 		private int[,] _filled; // we use this one bitwise
 
-		private bool _loaded = false;
+		private bool _loaded = false, _disposed = false;
 
 		private int _vao, _vbo, _pointCount = 0;
 
@@ -116,7 +116,7 @@ namespace Voxel.Components {
 		}
 
 		public void Load (int[][]? edges = null) {
-			if (_loaded) { return; }
+			if (_loaded || _disposed) { return; }
 
 			int[][] checks = new int[6][];
 
@@ -173,8 +173,7 @@ namespace Voxel.Components {
 						bottom = _filled[y, z] ^ checks[(int) Face.Bottom][z];
 					}
 
-					int front = _filled[y, z];
-					int back = _filled[y, z];
+					int front, back;
 
 					if (z < Size - 1) {
 						front = _filled[y, z] ^ _filled[y, z + 1];
@@ -232,8 +231,26 @@ namespace Voxel.Components {
 			_loaded = true;
 		}
 
-		public void Render () {
+		public void Unload () {
 			if (!_loaded) { return; }
+
+			GL.DeleteVertexArray(_vao);
+			GL.DeleteBuffer(_vbo);
+			_pointCount = 0;
+
+			_loaded = false;
+		}
+
+		public void Dispose () {
+			if (_disposed) { return; }
+
+			Unload();
+
+			_disposed = true;
+		}
+
+		public void Render () {
+			if (!_loaded || _disposed) { return; }
 
 			GL.BindVertexArray(_vao);
 			GL.DrawArrays(PrimitiveType.Triangles, 0, _pointCount);

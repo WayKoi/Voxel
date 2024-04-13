@@ -34,6 +34,12 @@ namespace Voxel.Components {
 			Distance = distance;
 		}
 
+		public PointLight(Light light, Vector3 pos, float distance) {
+			Light = light;
+			Position = pos;
+			Distance = distance;
+		}
+
 		public PointLight(string name, Vector3 pos, float distance) {
 			Light = Light.GetLight(name);
 			Position = pos;
