@@ -14,6 +14,10 @@ namespace Voxel.Components {
 
 		public Vector3 Position {
 			get { return _position; }
+			set {
+				_position = value;
+				UpdateLookAt();
+			}
 		}
 
 		public Vector3 Speed, Acceleration = new Vector3(0, 0, 0);

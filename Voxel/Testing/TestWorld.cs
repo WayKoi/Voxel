@@ -18,8 +18,8 @@ namespace Voxel.Testing {
 			base.Setup();
 
 			Fog = new Fog(new Vector3(0.6f, 0.5f, 0f), 1, 0.1f);
-
 			FarPlane = 400f;
+			CameraPosition = new Vector3(0, 40, 0);
 
 			// type = Cube.AddType(new StaticCubeType(new Vector3(0.5f, 1, 0.5f), 1, 1));
 		}

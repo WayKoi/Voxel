@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Voxel.Structs {
-	internal struct Light {
+	public struct Light {
 		public Vector3 Ambient;
 		public Vector3 Diffuse;
 		public Vector3 Specular;

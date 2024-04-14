@@ -9,6 +9,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using Voxel.Managers;
 using Voxel.Testing;
 
 namespace Voxel {
@@ -30,7 +31,7 @@ namespace Voxel {
 		protected override void OnRenderFrame(FrameEventArgs args) {
 			base.OnRenderFrame(args);
 
-			world.Render();
+			WorldM.Render();
 
 			SwapBuffers();
 		}
@@ -41,10 +42,14 @@ namespace Voxel {
 			MouseState state = MouseState.GetSnapshot();
 			KeyboardState input = KeyboardState;
 
-			world.Update(args, state, input);
+			WorldM.Update(args, state, input);
 
 			if (input.IsKeyDown(Keys.Escape)) {
 				Close();
+			}
+
+			if (input.IsKeyReleased(Keys.R)) {
+				WorldM.AddWorld("test", new TestWorld());
 			}
 		}
 
@@ -59,8 +64,9 @@ namespace Voxel {
 
 			CursorState = CursorState.Grabbed;
 
-			world.Init();
-			world.Load();
+			WorldM.AddWorld("test", new TestWorld());
+
+			WorldM.SetCurrent("test");
 		}
 
 		protected override void OnResize(ResizeEventArgs e) {

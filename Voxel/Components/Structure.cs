@@ -8,7 +8,7 @@ using Piles.DataFiles;
 using Voxel.Structs;
 
 namespace Voxel.Components {
-	internal class Structure {
+	public class Structure {
 		private List<StructCube> _cubes = new List<StructCube>();
 		private Dictionary<int, int> _typelookup = new Dictionary<int, int>();
 		private Dictionary<int, LightDef> _lightlookup = new Dictionary<int, LightDef>();
@@ -32,7 +32,7 @@ namespace Voxel.Components {
 			Load(filename);
 		}
 
-		public List<StructCube> Place (int x, int y, int z) {
+		internal List<StructCube> Place (int x, int y, int z) {
 			List<StructCube> cubes = new List<StructCube>();
 
 			foreach (StructCube cube in _cubes) {

@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Voxel.Structs {
-	internal struct Fog {
+	public struct Fog {
 		public Vector3 Colour;
 		public float Density, Start, End;
 

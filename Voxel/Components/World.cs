@@ -12,7 +12,7 @@ using Voxel.Shaders;
 using Voxel.Structs;
 
 namespace Voxel.Components {
-	internal class World {
+	public class World {
 		private Dictionary<(int, int, int), Chunk> _chunks = new Dictionary<(int, int, int), Chunk>();
 		private bool _initialized = false, _loaded = false, _disposed = false;
 
@@ -40,6 +40,11 @@ namespace Voxel.Components {
 		}
 
 		private Camera _camera = new Camera();
+
+		protected Vector3 CameraPosition {
+			get { return _camera.Position; }
+			set { _camera.Position = value; }
+		}
 
 		private Shader _shader = new Shader("./Shaders/3D/basic.vert", "./Shaders/3D/basic.frag");
 		private Shader _lightShader = new Shader("./Shaders/3D/basic.vert", "./Shaders/3D/light.frag");

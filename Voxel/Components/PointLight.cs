@@ -9,7 +9,7 @@ using Voxel.Shaders;
 using Voxel.Structs;
 
 namespace Voxel.Components {
-	internal class PointLight {
+	public class PointLight {
 		public Light Light = new Light(0, 0, 0);
 		private Vector3 _position = new Vector3(0);
 
