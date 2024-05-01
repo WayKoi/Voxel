@@ -259,7 +259,7 @@ namespace Voxel.Components {
 
 
 		// Private
-		private bool CheckFilled (int x, int y, int z) {
+		public bool CheckFilled (int x, int y, int z) {
 			return (_filled[y, z] & 1 << x) != 0;
 		}
 

@@ -1,18 +1,14 @@
-### Basic Needs
 
-- Chunk Drawing
-- Block Culling
-
-### Wants
+### Todo list
 
 - 2D UI system
 - Some way of drawing voxel objects that have cubes smaller than the terrain
-
 
 ### Ideas
 
 - Make the chunks use bitwise operators for meshing
 	- maybe dont use meshing, see if that is laggy or fine with very large worlds
+
 - Make cubes have types but the colours of each can be slightly different than eachother
 	- basically make types be more descriptive
 	- Also include a material, like the specular, diffuse and ambient of the cube

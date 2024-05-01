@@ -8,21 +8,26 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.PortableExecutable;
 using System.Text;
+using System.Xml;
+using Voxel.Managers;
+using Voxel.Managers.Alarms;
 using Voxel.Shaders;
 using Voxel.Structs;
 
 namespace Voxel.Components {
 	public class World {
-		private Dictionary<(int, int, int), Chunk> _chunks = new Dictionary<(int, int, int), Chunk>();
 		private bool _initialized = false, _loaded = false, _disposed = false;
+
+		private AlarmGroup _alarms = new AlarmGroup();
+
+		private Dictionary<(int, int, int), Chunk> _chunks = new Dictionary<(int, int, int), Chunk>();
+		
+		private Vector3i _max = new Vector3i(0);
+		private Vector3i _min = new Vector3i(0);
 
 		private Matrix4 Model, View, Projection;
 
 		private float _farplane = 400.0f;
-
-		private Vector3i _max = new Vector3i(0);
-		private Vector3i _min = new Vector3i(0);
-
 		public float FarPlane {
 			get { return _farplane; }
 			protected set {
@@ -32,15 +37,7 @@ namespace Voxel.Components {
 			}
 		}
 
-		private Light _worldlight = new Light(0, 0, 0);
-
-		public Light WorldLight {
-			get { return _worldlight; }
-			protected set { _worldlight = value; }
-		}
-
-		private Camera _camera = new Camera();
-
+		protected Camera _camera = new Camera();
 		protected Vector3 CameraPosition {
 			get { return _camera.Position; }
 			set { _camera.Position = value; }
@@ -50,9 +47,25 @@ namespace Voxel.Components {
 		private Shader _lightShader = new Shader("./Shaders/3D/basic.vert", "./Shaders/3D/light.frag");
 
 		private List<PointLight> _lights = new List<PointLight>();
+		private Light _worldlight = new Light(0, 0, 0);
+
+		public Light WorldLight {
+			get { return _worldlight; }
+			protected set { _worldlight = value; }
+		}
+
+		private Vector3 _skycolour = new Vector3(0, 0, 0);
+		public Vector3 SkyColour {
+			get { return _skycolour; }
+			protected set { _skycolour = value; }
+		}
 
 		protected Fog Fog = new Fog(new Vector3(0, 0, 0), 0.8f, 0.4f);
 
+		private List<Component> _components = new List<Component>();
+		private float _gravity = 9.8f;
+
+		// Queues
 		private List<KeyValuePair<(int, int, int), Chunk>> _loadQ = new List<KeyValuePair<(int, int, int), Chunk>>();
 
 		public World() { }
@@ -60,9 +73,46 @@ namespace Voxel.Components {
 		public virtual void Build () { }
 		protected virtual void Setup() { }
 
+		protected void AddComponent (Component comp) {
+			_components.Add(comp);
+			if (_loaded) { comp.Load(); }
+		}
+
+		protected void SetAlarm (Alarm set) {
+			_alarms.Add(set);
+		}
+
 		protected void AddLight (PointLight light) {
 			_lights.Add(light);
 			if (_loaded) { light.Load(); }
+		}
+
+		public bool SpotFilled (int x, int y, int z) {
+			bool[] pos = new bool[] {
+				x < 0,
+				y < 0,
+				z < 0
+			};
+
+			x += pos[0] ? 1 : 0;
+			y += pos[1] ? 1 : 0;
+			z += pos[2] ? 1 : 0;
+
+			int cx = x / Chunk.Size + (pos[0] ? -1 : 0);
+			int cy = y / Chunk.Size + (pos[1] ? -1 : 0);
+			int cz = z / Chunk.Size + (pos[2] ? -1 : 0);
+
+			if (!_chunks.ContainsKey((cx, cy, cz))) {
+				return false;
+			}
+
+			Chunk chunk = _chunks[(cx, cy, cz)];
+
+			int px = pos[0] ? Chunk.Size - 1 - (Math.Abs(x) % Chunk.Size) : x % Chunk.Size;
+			int py = pos[1] ? Chunk.Size - 1 - (Math.Abs(y) % Chunk.Size) : y % Chunk.Size;
+			int pz = pos[2] ? Chunk.Size - 1 - (Math.Abs(z) % Chunk.Size) : z % Chunk.Size;
+
+			return chunk.CheckFilled(px, py, pz);
 		}
 
 		protected void PlaceStructure (Structure str, int x, int z) {
@@ -136,6 +186,8 @@ namespace Voxel.Components {
 
 			if (_loaded) { return; }
 
+			_alarms.Paused = false;
+
 			Model = Matrix4.Identity;
 			Projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(90.0f), 16f / 9f, 0.1f, _farplane);
 			View = _camera.LookAt;
@@ -146,6 +198,10 @@ namespace Voxel.Components {
 
 			_shader.Load();
 			_lightShader.Load();
+
+			foreach (Component comp in _components) {
+				comp.Load();
+			}
 
 			_loaded = true;
 		}
@@ -234,6 +290,8 @@ namespace Voxel.Components {
 		public virtual void Update(FrameEventArgs args, MouseState mouse, KeyboardState state) {
 			if (_disposed) { return; }
 
+			_alarms.Tick(args);
+
 			_camera.Update(args.Time, mouse.Delta, state);
 			_camera.Move(_camera.Speed);
 			View = _camera.LookAt;
@@ -258,10 +316,44 @@ namespace Voxel.Components {
 				LoadChunk(_loadQ[0]);
 				_loadQ.RemoveAt(0);
 			}
+
+			foreach (Component comp in _components) {
+				comp.VY -= (float) (_gravity * args.Time);
+
+				int x = (int) Math.Floor(comp.X);
+				int y = (int) Math.Floor(comp.Y);
+				int z = (int) Math.Floor(comp.Z);
+
+				int jumpx = (int) Math.Floor(comp.X - comp.Origin.X + comp.VX * args.Time);
+				int jumpy = (int) Math.Floor(comp.Y - comp.Origin.Y + comp.VY * args.Time);
+				int jumpz = (int) Math.Floor(comp.Z - comp.Origin.Z + comp.VZ * args.Time);
+
+				int jumpxs = (int) Math.Floor(comp.X - comp.Origin.X + comp.Size.X + comp.VX * args.Time);
+				int jumpys = (int) Math.Floor(comp.Y - comp.Origin.Y + comp.Size.Y + comp.VY * args.Time);
+				int jumpzs = (int) Math.Floor(comp.Z - comp.Origin.Z + comp.Size.Z + comp.VZ * args.Time);
+
+				if (SpotFilled(jumpx, y, z) || SpotFilled(jumpxs, y, z)) {
+					comp.VX = 0;
+				}
+
+				if (SpotFilled(x, jumpy, z) || SpotFilled(x, jumpys, z)) {
+					comp.VY = 0;
+				}
+
+				if (SpotFilled(x, y, jumpz) || SpotFilled(x, y, jumpzs)) {
+					comp.VZ = 0;
+				}
+
+				comp.Update(args, mouse, state);
+
+				
+			}
 		}
 
 		public void Unload () {
 			if (!_loaded) { return; }
+
+			_alarms.Paused = true;
 
 			foreach (KeyValuePair<(int, int, int), Chunk> chunk in _chunks) {
 				chunk.Value.Unload();
@@ -274,6 +366,8 @@ namespace Voxel.Components {
 			if (_disposed) { return; }
 
 			OnDispose();
+
+			_alarms.Dispose();
 
 			_shader.Dispose();
 			_lightShader.Dispose();
@@ -292,11 +386,18 @@ namespace Voxel.Components {
 		public void Render () {
 			if (_disposed) { return; }
 
-			GL.ClearColor(Fog.Colour.X, Fog.Colour.Y, Fog.Colour.Z, 1);
+			GL.ClearColor(SkyColour.X, SkyColour.Y, SkyColour.Z, 1);
 			GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
 			RenderChunks();
+
+			foreach (Component comp in _components) {
+				comp.Render();
+			}
+
 			RenderLights();
+
+			
 		}
 
 		private void RenderChunks () {

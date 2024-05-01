@@ -13,10 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Shaders\3D\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Reference Include="Stockpile">
       <HintPath>..\..\Stockpile\bin\Debug\net6.0\Stockpile.dll</HintPath>
     </Reference>

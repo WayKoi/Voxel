@@ -58,63 +58,68 @@ namespace Voxel.Components {
 			switch (face) {
 				case Face.Back:
 					return new Vertex3D[] {
-						new Vertex3D(x, y,				 z - size.Z,	0, 0, -1, colour),
-						new Vertex3D(x, y + size.Y,		 z - size.Z,	0, 0, -1, colour),
-						new Vertex3D(x + size.X, y + size.Y, z - size.Z,	0, 0, -1, colour),
+						new Vertex3D(x, y, z,               0, 0, -1, colour),
+						new Vertex3D(x, y + size.Y, z,      0, 0, -1, colour),
+						new Vertex3D(x + size.X, y + size.Y, z, 0, 0, -1, colour),
 
-						new Vertex3D(x + size.X, y + size.Y, z - size.Z,  0, 0, -1, colour),
-						new Vertex3D(x + size.X, y,		 z - size.Z,	0, 0, -1, colour),
-						new Vertex3D(x, y,               z - size.Z,  0, 0, -1, colour)
+						new Vertex3D(x + size.X, y + size.Y, z , 0, 0, -1, colour),
+						new Vertex3D(x + size.X, y, z,      0, 0, -1, colour),
+						new Vertex3D(x, y, z,               0, 0, -1, colour)
 					};
 				case Face.Front:
-					return (new Vertex3D[] {
-						new Vertex3D(x, y, z,				0, 0, 1, colour),
-						new Vertex3D(x, y + size.Y, z,		0, 0, 1, colour),
-						new Vertex3D(x + size.X, y + size.Y, z, 0, 0, 1, colour),
+					return new Vertex3D[] {
+						new Vertex3D(x, y, z + size.Z, 0, 0, 1, colour),
+						new Vertex3D(x + size.X, y, z + size.Z, 0, 0, 1, colour),
+						new Vertex3D(x + size.X, y + size.Y, z + size.Z, 0, 0, 1, colour),
 
-						new Vertex3D(x + size.X, y + size.Y, z, 0, 0, 1, colour),
-						new Vertex3D(x + size.X, y, z,		0, 0, 1, colour),
-						new Vertex3D(x, y, z,               0, 0, 1, colour)
-					}).Reverse().ToArray();
+						new Vertex3D(x + size.X, y + size.Y, z + size.Z, 0, 0, 1, colour),
+						new Vertex3D(x, y + size.Y, z + size.Z, 0, 0, 1, colour),
+						new Vertex3D(x, y, z + size.Z, 0, 0, 1, colour),
+
+					};
 				case Face.Left:
 					return new Vertex3D[] {
-						new Vertex3D(x, y, z,				-1, 0, 0, colour),
-						new Vertex3D(x, y + size.Y, z,		-1, 0, 0, colour),
-						new Vertex3D(x, y + size.Y, z - size.Z, -1, 0, 0, colour),
+						new Vertex3D(x, y, z + size.Z, -1, 0, 0, colour),
+						new Vertex3D(x, y + size.Y, z + size.Z, -1, 0, 0, colour),
+						new Vertex3D(x, y + size.Y, z, -1, 0, 0, colour),
 
-						new Vertex3D(x, y + size.Y, z - size.Z, -1, 0, 0, colour),
-						new Vertex3D(x, y, z - size.Z,		-1, 0, 0, colour),
-						new Vertex3D(x, y, z,               -1, 0, 0, colour),
+						new Vertex3D(x, y + size.Y, z, -1, 0, 0, colour),
+						new Vertex3D(x, y, z, -1, 0, 0, colour),
+						new Vertex3D(x, y, z + size.Z, -1, 0, 0, colour),
+
 					};
 				case Face.Right:
 					return new Vertex3D[] {
-						new Vertex3D(x + size.X, y, z,				1, 0, 0, colour),
-						new Vertex3D(x + size.X, y + size.Y, z,			1, 0, 0, colour),
-						new Vertex3D(x + size.X, y + size.Y, z - size.Z,	1, 0, 0, colour),
+						new Vertex3D(x + size.X, y, z + size.Z, 1, 0, 0, colour),
+						new Vertex3D(x + size.X, y, z, 1, 0, 0, colour),
+						new Vertex3D(x + size.X, y + size.Y, z, 1, 0, 0, colour),
 
-						new Vertex3D(x + size.X, y + size.Y, z - size.Z,  1, 0, 0, colour),
-						new Vertex3D(x + size.X, y, z - size.Z,			1, 0, 0, colour),
-						new Vertex3D(x + size.X, y, z,                1, 0, 0, colour),
-					}.Reverse().ToArray(); ;
+						new Vertex3D(x + size.X, y + size.Y, z, 1, 0, 0, colour),
+						new Vertex3D(x + size.X, y + size.Y, z + size.Z, 1, 0, 0, colour),
+						new Vertex3D(x + size.X, y, z + size.Z, 1, 0, 0, colour),
+
+					};
 				case Face.Bottom:
 					return new Vertex3D[] {
-						new Vertex3D(x, y, z,				0, -1, 0, colour),
-						new Vertex3D(x + size.X, y, z,		0, -1, 0, colour),
-						new Vertex3D(x + size.X, y, z - size.Z, 0, -1, 0, colour),
+						new Vertex3D(x + size.X, y, z, 0, -1, 0, colour),
+						new Vertex3D(x + size.X, y, z + size.Z, 0, -1, 0, colour),
+						new Vertex3D(x, y, z + size.Z, 0, -1, 0, colour),
 
-						new Vertex3D(x + size.X, y, z - size.Z, 0, -1, 0, colour),
-						new Vertex3D(x, y, z - size.Z,		0, -1, 0, colour),
-						new Vertex3D(x, y, z,               0, -1, 0, colour),
-					}.Reverse().ToArray(); ;
+						new Vertex3D(x, y, z + size.Z, 0, -1, 0, colour),
+						new Vertex3D(x, y, z, 0, -1, 0, colour),
+						new Vertex3D(x + size.X, y, z, 0, -1, 0, colour),
+
+					};
 				case Face.Top:
 					return new Vertex3D[] {
-						new Vertex3D(x, y + size.Y, z,				0, 1, 0, colour),
-						new Vertex3D(x + size.X, y + size.Y, z,			0, 1, 0, colour),
-						new Vertex3D(x + size.X, y + size.Y, z - size.Z,	0, 1, 0, colour),
+						new Vertex3D(x, y + size.Y, z + size.Z, 0, 1, 0, colour),
+						new Vertex3D(x + size.X, y + size.Y, z + size.Z, 0, 1, 0, colour),
+						new Vertex3D(x + size.X, y + size.Y, z, 0, 1, 0, colour),
 
-						new Vertex3D(x + size.X, y + size.Y, z - size.Z,	0, 1, 0, colour),
-						new Vertex3D(x, y + size.Y, z - size.Z,			0, 1, 0, colour),
-						new Vertex3D(x, y + size.Y, z,				0, 1, 0, colour),
+						new Vertex3D(x + size.X, y + size.Y, z, 0, 1, 0, colour),
+						new Vertex3D(x, y + size.Y, z, 0, 1, 0, colour),
+						new Vertex3D(x, y + size.Y, z + size.Z, 0, 1, 0, colour),
+
 					};
 			}
 

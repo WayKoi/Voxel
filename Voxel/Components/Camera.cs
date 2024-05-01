@@ -64,7 +64,7 @@ namespace Voxel.Components {
 
 		public void Update(double time, Vector2 state, KeyboardState keyState) {
 
-			Vector3 move = Vector3.Zero;
+			/*Vector3 move = Vector3.Zero;
 
 			move.Z = (keyState.IsKeyDown(Keys.W) ? 1 : 0) + (keyState.IsKeyDown(Keys.S) ? -1 : 0);
 			move.X = (keyState.IsKeyDown(Keys.A) ? 1 : 0) + (keyState.IsKeyDown(Keys.D) ? -1 : 0);
@@ -102,7 +102,7 @@ namespace Voxel.Components {
 
 			Speed.X = Math.Min(Math.Abs(Speed.X), MaxSpeed) * Math.Sign(Speed.X);
 			Speed.Y = Math.Min(Math.Abs(Speed.Y), MaxSpeed) * Math.Sign(Speed.Y);
-			Speed.Z = Math.Min(Math.Abs(Speed.Z), MaxSpeed) * Math.Sign(Speed.Z);
+			Speed.Z = Math.Min(Math.Abs(Speed.Z), MaxSpeed) * Math.Sign(Speed.Z);*/
 
 			if (state.X != 0 || state.Y != 0) {
 				float dx = state.X;
@@ -117,8 +117,6 @@ namespace Voxel.Components {
 
 				UpdateLookAt();
 			}
-
-
 		}
 
 		public void Move(Vector3 Amt) {

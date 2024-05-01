@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Voxel.Components;
+using Voxel.Managers.Alarms;
 using Voxel.Structs;
 
 namespace Voxel.Testing {
@@ -17,11 +18,24 @@ namespace Voxel.Testing {
 		protected override void Setup() {
 			base.Setup();
 
-			Fog = new Fog(new Vector3(0.6f, 0.5f, 0f), 1, 0.1f);
+			Fog = new Fog(new Vector3(0.6f, 0.6f, 0.7f), 2, 0.1f);
+			SkyColour = new Vector3(0.6f, 0.6f, 0.7f);
+			
+			WorldLight = new Light(
+				new Vector3(0.1f, 0.1f, 0.1f),
+				new Vector3(0),
+				new Vector3(0),
+				new Vector3(0, -1, 0)
+			);
+
 			FarPlane = 400f;
 			CameraPosition = new Vector3(0, 40, 0);
+			
+			SetAlarm(new RealTimeAlarm(() => { Console.WriteLine("test"); }, 10));
 
-			// type = Cube.AddType(new StaticCubeType(new Vector3(0.5f, 1, 0.5f), 1, 1));
+			// type = Cube.AddType(new HeightBasedCubeType(new Vector3(0.79f, 0.8f, 0.83f), 0.1f, 1f, 32, 1, 1));
+
+			AddComponent(new Player(_camera));
 		}
 
 		public override void Build() {
@@ -43,10 +57,10 @@ namespace Voxel.Testing {
 				AddLight(
 					new PointLight(
 						new Vector3(
-							1
-						*//*(float) rand.NextDouble(),
+							//1
 						(float) rand.NextDouble(),
-						(float) rand.NextDouble()*//*
+						(float) rand.NextDouble(),
+						(float) rand.NextDouble()
 						),
 						new Vector3(
 							rand.Next(-256, 256),
@@ -60,7 +74,7 @@ namespace Voxel.Testing {
 
 			for (int i = 0; i < 100; i++) {
 				PlaceStructure(
-					_rod, 
+					_rod,
 					rand.Next(-200, 200),
 					rand.Next(-200, 200)
 				);

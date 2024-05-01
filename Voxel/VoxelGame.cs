@@ -14,8 +14,6 @@ using Voxel.Testing;
 
 namespace Voxel {
 	internal class VoxelGame : GameWindow {
-		private TestWorld world = new TestWorld();
-
 		public VoxelGame(int width, int height, string title) : 
 			base(
 				GameWindowSettings.Default,
@@ -65,7 +63,6 @@ namespace Voxel {
 			CursorState = CursorState.Grabbed;
 
 			WorldM.AddWorld("test", new TestWorld());
-
 			WorldM.SetCurrent("test");
 		}
 
