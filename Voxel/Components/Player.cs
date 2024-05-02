@@ -14,7 +14,7 @@ namespace Voxel.Components {
 	public class Player : Component {
 		private Camera _camera;
 
-		private CameraType _cameraType = CameraType.ThirdPerson;
+		private CameraType _cameraType = CameraType.FirstPerson;
 
 		private int _vbo, _vao;
 

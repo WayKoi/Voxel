@@ -65,6 +65,11 @@ namespace Voxel.Components {
 		private List<Component> _components = new List<Component>();
 		private float _gravity = 9.8f;
 
+		public float Gravity {
+			get { return _gravity; }
+			protected set { _gravity = value; }
+		}
+
 		// Queues
 		private List<KeyValuePair<(int, int, int), Chunk>> _loadQ = new List<KeyValuePair<(int, int, int), Chunk>>();
 
